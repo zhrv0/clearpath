@@ -42,9 +42,15 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script type="text/babel">
     const { useState, useRef, useEffect, useCallback } = React;
+
+    /* ── SUPABASE ── */
+    const SUPA_URL = "https://vnyqcreioioryfvnmyqk.supabase.co";
+    const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZueXFjcmVpb2lvcnlmdm5teXFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNDA1NTAsImV4cCI6MjA4ODgxNjU1MH0.LRl3S2p2XaCMU-szoOibZHBtHVF5rDQe7LP9Q8fMhwg";
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     /* ── PALETTE ── */
     const G = {
@@ -156,29 +162,71 @@
       const [codeSent, setCodeSent] = useState(false);
       const [loading, setLoading] = useState(false);
       const [msg, setMsg]         = useState("");
+      const [msgColor, setMsgColor] = useState(G.goldSoft);
 
-      const fakeCode = useRef(Math.floor(100000+Math.random()*900000).toString());
+      // Check if we're coming back from Google OAuth redirect
+      useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user) {
+            const n = session.user.user_metadata?.full_name ||
+                      session.user.user_metadata?.name ||
+                      session.user.email?.split("@")[0] || "Wanderer";
+            onLogin(n);
+          }
+        });
+        // Listen for auth state changes (e.g. after redirect)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (session?.user) {
+            const n = session.user.user_metadata?.full_name ||
+                      session.user.user_metadata?.name ||
+                      session.user.email?.split("@")[0] || "Wanderer";
+            onLogin(n);
+          }
+        });
+        return () => subscription.unsubscribe();
+      }, []);
 
-      const handleGoogle = () => {
+      const handleGoogle = async () => {
         setLoading(true);
-        setTimeout(() => { setLoading(false); setStep("name"); }, 1200);
+        setMsg("");
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: window.location.href }
+        });
+        if (error) { setMsg(error.message); setMsgColor(G.red); setLoading(false); }
       };
 
-      const handleEmail = () => {
-        if (!email.includes("@")) { setMsg("Please enter a valid email"); return; }
-        setLoading(true);
-        setTimeout(() => { setLoading(false); setMsg("A verification link has been sent to your email. For this demo, just continue."); setTimeout(()=>setStep("name"),1800); }, 1400);
+      const handleEmail = async () => {
+        if (!email.includes("@")) { setMsg("Please enter a valid email"); setMsgColor(G.red); return; }
+        setLoading(true); setMsg("");
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo: window.location.href }
+        });
+        setLoading(false);
+        if (error) { setMsg(error.message); setMsgColor(G.red); }
+        else { setMsg("Magic link sent! Check your email and click the link to sign in."); setMsgColor(G.sage); }
       };
 
-      const handleSendCode = () => {
-        if (phone.replace(/\D/g,"").length < 8) { setMsg("Please enter a valid number"); return; }
-        setLoading(true);
-        setTimeout(() => { setLoading(false); setCodeSent(true); setMsg(`Demo code: ${fakeCode.current}`); }, 1400);
+      const handleSendCode = async () => {
+        const cleaned = phone.replace(/\s/g,"");
+        if (cleaned.length < 8) { setMsg("Please enter a valid number with country code"); setMsgColor(G.red); return; }
+        setLoading(true); setMsg("");
+        const { error } = await supabase.auth.signInWithOtp({ phone: cleaned });
+        setLoading(false);
+        if (error) { setMsg(error.message); setMsgColor(G.red); }
+        else { setCodeSent(true); setMsg("Code sent! Check your messages."); setMsgColor(G.sage); }
       };
 
-      const handleVerifyCode = () => {
-        if (code === fakeCode.current) { setStep("name"); setMsg(""); }
-        else setMsg("Incorrect code, try again");
+      const handleVerifyCode = async () => {
+        setLoading(true); setMsg("");
+        const { error } = await supabase.auth.verifyOtp({
+          phone: phone.replace(/\s/g,""),
+          token: code,
+          type: "sms"
+        });
+        setLoading(false);
+        if (error) { setMsg("Incorrect code, try again"); setMsgColor(G.red); }
       };
 
       if (step === "name") return (
@@ -221,9 +269,9 @@
 
           <div style={{width:"100%",maxWidth:340,display:"flex",flexDirection:"column",gap:10}}>
 
-            {/* Google */}
             {!emailMode && !phoneMode && (
               <>
+                {/* Google */}
                 <button className="auth-btn" onClick={handleGoogle} disabled={loading}>
                   <span style={{width:30,height:30,borderRadius:8,background:`${G.gold}18`,
                     border:`1px solid ${G.border}`,display:"flex",alignItems:"center",
@@ -233,12 +281,12 @@
                       <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
                       <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
                       <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                      <path fill="none" d="M0 0h48v48H0z"/>
                     </svg>
                   </span>
-                  {loading ? "Connecting..." : "Continue with Google"}
+                  {loading ? "Redirecting to Google..." : "Continue with Google"}
                 </button>
 
+                {/* Email */}
                 <button className="auth-btn" onClick={()=>{ setEmailMode(true); setPhoneMode(false); setMsg(""); }}>
                   <span style={{width:30,height:30,borderRadius:8,background:`${G.gold}18`,
                     border:`1px solid ${G.border}`,display:"flex",alignItems:"center",
@@ -246,12 +294,16 @@
                   Continue with Email
                 </button>
 
+                {/* Phone */}
                 <button className="auth-btn" onClick={()=>{ setPhoneMode(true); setEmailMode(false); setMsg(""); }}>
                   <span style={{width:30,height:30,borderRadius:8,background:`${G.gold}18`,
                     border:`1px solid ${G.border}`,display:"flex",alignItems:"center",
                     justifyContent:"center",flexShrink:0,color:G.gold,fontSize:11,fontWeight:700}}>+</span>
                   Continue with Phone Number
                 </button>
+
+                {msg && <p style={{color:msgColor,fontSize:12,fontFamily:"'Lato',sans-serif",
+                  lineHeight:1.5,textAlign:"center"}}>{msg}</p>}
 
                 <div style={{display:"flex",alignItems:"center",gap:12,margin:"4px 0"}}>
                   <div style={{flex:1,height:1,background:G.border}} />
@@ -278,16 +330,21 @@
                 <Label style={{marginBottom:4}}>enter your email</Label>
                 <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
                   placeholder="you@example.com"
+                  onKeyDown={e=>e.key==="Enter"&&handleEmail()}
                   style={{padding:"14px 18px",borderRadius:16,background:G.surface,
                     border:`1px solid ${G.borderHi}`,color:G.cream,fontSize:14,outline:"none"}} />
-                {msg && <p style={{color:G.goldSoft,fontSize:12,fontFamily:"'Lato',sans-serif",lineHeight:1.5}}>{msg}</p>}
+                {msg && <p style={{color:msgColor,fontSize:12,fontFamily:"'Lato',sans-serif",lineHeight:1.6}}>{msg}</p>}
                 <button className="btn-hover" onClick={handleEmail} disabled={loading} style={{
                   padding:"14px",borderRadius:16,cursor:"pointer",
                   background:`linear-gradient(135deg,${G.gold}22,${G.gold}08)`,
                   border:`1px solid ${G.gold}44`,color:G.gold,
                   fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700,letterSpacing:3}}>
-                  {loading ? "SENDING..." : "SEND LINK"}
+                  {loading ? "SENDING..." : "SEND MAGIC LINK"}
                 </button>
+                <p style={{color:G.mutedLo,fontSize:11,fontFamily:"'Lato',sans-serif",
+                  textAlign:"center",lineHeight:1.5}}>
+                  We'll email you a link — no password needed
+                </p>
               </div>
             )}
 
@@ -298,15 +355,17 @@
                   background:"transparent",border:"none",color:G.muted,cursor:"pointer",
                   fontFamily:"'Lato',sans-serif",fontSize:11,letterSpacing:2,
                   textAlign:"left",marginBottom:4}}>← BACK</button>
-
                 {!codeSent ? (
                   <>
                     <Label style={{marginBottom:4}}>enter your number</Label>
                     <input type="tel" value={phone} onChange={e=>setPhone(e.target.value)}
-                      placeholder="+1 234 567 8900"
+                      placeholder="+212 6XX XXX XXX"
                       style={{padding:"14px 18px",borderRadius:16,background:G.surface,
                         border:`1px solid ${G.borderHi}`,color:G.cream,fontSize:14,outline:"none"}} />
-                    {msg && <p style={{color:G.red,fontSize:12,fontFamily:"'Lato',sans-serif"}}>{msg}</p>}
+                    <p style={{color:G.mutedLo,fontSize:11,fontFamily:"'Lato',sans-serif",lineHeight:1.5}}>
+                      Include country code, e.g. +212 for Morocco
+                    </p>
+                    {msg && <p style={{color:msgColor,fontSize:12,fontFamily:"'Lato',sans-serif"}}>{msg}</p>}
                     <button className="btn-hover" onClick={handleSendCode} disabled={loading} style={{
                       padding:"14px",borderRadius:16,cursor:"pointer",
                       background:`linear-gradient(135deg,${G.gold}22,${G.gold}08)`,
@@ -318,18 +377,18 @@
                 ) : (
                   <>
                     <Label style={{marginBottom:4}}>enter verification code</Label>
-                    <p style={{color:G.goldSoft,fontSize:12,fontFamily:"'Lato',sans-serif",lineHeight:1.6}}>{msg}</p>
+                    {msg && <p style={{color:msgColor,fontSize:12,fontFamily:"'Lato',sans-serif",lineHeight:1.6}}>{msg}</p>}
                     <input type="text" value={code} onChange={e=>setCode(e.target.value)}
                       placeholder="6-digit code" maxLength={6}
                       style={{padding:"14px 18px",borderRadius:16,background:G.surface,
                         border:`1px solid ${G.borderHi}`,color:G.cream,fontSize:18,
                         letterSpacing:6,outline:"none",textAlign:"center"}} />
-                    <button className="btn-hover" onClick={handleVerifyCode} style={{
+                    <button className="btn-hover" onClick={handleVerifyCode} disabled={loading} style={{
                       padding:"14px",borderRadius:16,cursor:"pointer",
                       background:`linear-gradient(135deg,${G.gold}22,${G.gold}08)`,
                       border:`1px solid ${G.gold}44`,color:G.gold,
                       fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700,letterSpacing:3}}>
-                      VERIFY CODE
+                      {loading ? "VERIFYING..." : "VERIFY CODE"}
                     </button>
                   </>
                 )}
