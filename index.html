@@ -42,7 +42,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <script type="text/babel">
     const { useState, useRef, useEffect, useCallback } = React;
@@ -861,7 +861,7 @@
     /* ── ROOT ── */
     function App() {
       const [loggedIn, setLoggedIn] = useState(false);
-      const [user, setUser]         = useState({name:"",bio:"",why:"",avatar:null,points:420,streak:7,soberDays:7,lastCheckIn:null});
+      const [user, setUser]         = useState({name:"",bio:"",why:"",avatar:null,points:0,streak:0,soberDays:0,lastCheckIn:null});
       const [tab, setTab]           = useState("home");
       const [doneQuests, setDoneQuests]   = useState([]);
       const [completedTools, setCompletedTools] = useState([]);
