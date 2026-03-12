@@ -73,38 +73,79 @@
       { name:"Phoenix",  min:10000, color:"#e08c42" },
     ];
 
-    const HOME_QUESTS = [
-      { id:"h1",  cat:"home", title:"Make your bed",           desc:"Start the day with one small act of care for yourself",     xp:20 },
-      { id:"h2",  cat:"home", title:"Drink a glass of water",  desc:"Hydrate before anything else. Your body will thank you",    xp:10 },
-      { id:"h3",  cat:"home", title:"Open a window",           desc:"Let fresh air in. Even 2 minutes of fresh air matters",     xp:15 },
-      { id:"h4",  cat:"home", title:"Eat something warm",      desc:"Cook or heat up something nourishing, however simple",      xp:25 },
-      { id:"h5",  cat:"home", title:"Tidy one surface",        desc:"Just one — a table, a counter, the floor beside your bed",  xp:20 },
-      { id:"h6",  cat:"home", title:"Take a shower",           desc:"You don't have to do anything else after. Just this",       xp:30 },
-      { id:"h7",  cat:"home", title:"Sit in natural light",    desc:"Move near a window for 10 minutes. No phone needed",        xp:20 },
-      { id:"h8",  cat:"home", title:"Stretch for 5 minutes",  desc:"Lie on the floor and let your body slowly wake up",         xp:25 },
-      { id:"h9",  cat:"home", title:"Put on music you love",  desc:"Let sound fill the space. Let it move through you",         xp:15 },
-      { id:"h10", cat:"home", title:"Write one true sentence", desc:"Anything. How you feel right now. One sentence is enough",  xp:20 },
+    // ── FULL QUEST POOL (rotates daily, 5 per category shown each day) ──
+    const ALL_HOME_POOL = [
+      { id:"h1",  cat:"home", title:"Make your bed",              desc:"Start the day with one small act of care for yourself",        xp:20 },
+      { id:"h2",  cat:"home", title:"Drink a glass of water",     desc:"Hydrate before anything else. Your body will thank you",       xp:10 },
+      { id:"h3",  cat:"home", title:"Open a window",              desc:"Let fresh air in. Even 2 minutes of fresh air matters",        xp:15 },
+      { id:"h4",  cat:"home", title:"Eat something warm",         desc:"Cook or heat up something nourishing, however simple",         xp:25 },
+      { id:"h5",  cat:"home", title:"Tidy one surface",           desc:"Just one — a table, a counter, the floor beside your bed",     xp:20 },
+      { id:"h6",  cat:"home", title:"Take a shower",              desc:"You don't have to do anything else after. Just this",          xp:30 },
+      { id:"h7",  cat:"home", title:"Sit in natural light",       desc:"Move near a window for 10 minutes. No phone needed",           xp:20 },
+      { id:"h8",  cat:"home", title:"Stretch for 5 minutes",      desc:"Lie on the floor and let your body slowly wake up",            xp:25 },
+      { id:"h9",  cat:"home", title:"Put on music you love",      desc:"Let sound fill the space. Let it move through you",            xp:15 },
+      { id:"h10", cat:"home", title:"Write one true sentence",    desc:"Anything. How you feel right now. One sentence is enough",     xp:20 },
+      { id:"h11", cat:"home", title:"Make a cup of tea or coffee",desc:"Slow down and make something warm just for yourself",          xp:15 },
+      { id:"h12", cat:"home", title:"Light a candle",             desc:"Create a small moment of calm in your space",                  xp:10 },
+      { id:"h13", cat:"home", title:"Call someone you love",      desc:"Just to hear their voice. Five minutes is enough",             xp:30 },
+      { id:"h14", cat:"home", title:"Cook a real meal",           desc:"Anything you made yourself counts, however simple",            xp:35 },
+      { id:"h15", cat:"home", title:"Wash your face",             desc:"A small ritual that says: I am taking care of myself",         xp:10 },
+      { id:"h16", cat:"home", title:"Spend 10 min with no screen",desc:"Sit with yourself. No phone, no TV. Just quiet",              xp:25 },
+      { id:"h17", cat:"home", title:"Read for 15 minutes",        desc:"A book, an article — anything that isn't a feed",              xp:20 },
+      { id:"h18", cat:"home", title:"Do one thing you've avoided",desc:"The thing on your list. Just one. Start and stop is fine",     xp:40 },
+      { id:"h19", cat:"home", title:"Change your bedsheets",      desc:"Fresh sheets feel like a reset. You deserve that",             xp:30 },
+      { id:"h20", cat:"home", title:"Sit outside your door",      desc:"Just the step or the balcony. Counts as outside",              xp:15 },
     ];
 
-    const OUT_QUESTS = [
-      { id:"o1", cat:"out", title:"Step outside for 5 min",   desc:"That is it. No destination. Just air on your face",         xp:40 },
-      { id:"o2", cat:"out", title:"Walk around the block",    desc:"One slow loop. Look at one thing you've never noticed",      xp:55 },
-      { id:"o3", cat:"out", title:"Sit outside somewhere",    desc:"A bench, a step, the ground. Just be outside for a while",  xp:45 },
-      { id:"o4", cat:"out", title:"Go to a cafe alone",       desc:"Order something. Sit. Watch the world without your phone",  xp:70 },
-      { id:"o5", cat:"out", title:"Visit a green space",      desc:"A park, a garden, even a tree-lined street will do",        xp:60 },
-      { id:"o6", cat:"out", title:"Say hi to a stranger",     desc:"A neighbour, a cashier. One real moment of connection",     xp:50 },
-      { id:"o7", cat:"out", title:"Walk somewhere new",       desc:"A street you've never taken. No map, just wander",          xp:65 },
-      { id:"o8", cat:"out", title:"Attend something social",  desc:"Briefly. You can leave early. Just show up",                xp:120},
+    const ALL_OUT_POOL = [
+      { id:"o1",  cat:"out", title:"Step outside for 5 min",     desc:"That is it. No destination. Just air on your face",            xp:40 },
+      { id:"o2",  cat:"out", title:"Walk around the block",      desc:"One slow loop. Look at one thing you've never noticed",         xp:55 },
+      { id:"o3",  cat:"out", title:"Sit outside somewhere",      desc:"A bench, a step, the ground. Just be outside for a while",     xp:45 },
+      { id:"o4",  cat:"out", title:"Go to a cafe alone",         desc:"Order something. Sit. Watch the world without your phone",     xp:70 },
+      { id:"o5",  cat:"out", title:"Visit a green space",        desc:"A park, a garden, even a tree-lined street will do",           xp:60 },
+      { id:"o6",  cat:"out", title:"Say hi to a stranger",       desc:"A neighbour, a cashier. One real moment of connection",        xp:50 },
+      { id:"o7",  cat:"out", title:"Walk somewhere new",         desc:"A street you've never taken. No map, just wander",             xp:65 },
+      { id:"o8",  cat:"out", title:"Attend something social",    desc:"Briefly. You can leave early. Just show up",                   xp:120},
+      { id:"o9",  cat:"out", title:"Watch the sky for 5 min",    desc:"Clouds, stars, sunrise. Just look up and breathe",             xp:30 },
+      { id:"o10", cat:"out", title:"Walk without headphones",    desc:"Just the sounds around you. Notice them one by one",           xp:45 },
+      { id:"o11", cat:"out", title:"Buy yourself something small",desc:"A snack, a coffee, a flower. A tiny gift to yourself",        xp:35 },
+      { id:"o12", cat:"out", title:"Take a different route home", desc:"Change one small thing. See what's different",                xp:40 },
+      { id:"o13", cat:"out", title:"Sit in a place you like",    desc:"Somewhere that feels safe or calm. Just exist there",          xp:50 },
+      { id:"o14", cat:"out", title:"Go to a library or bookshop",desc:"You don't have to buy anything. Just be there",                xp:55 },
+      { id:"o15", cat:"out", title:"Watch people from a bench",  desc:"Observe the world going on around you. No judgment",           xp:35 },
     ];
 
-    const SOCIAL_QUESTS = [
-      { id:"s1", cat:"social", title:"Text someone first",      desc:"Reach out before they reach you",              xp:35 },
-      { id:"s2", cat:"social", title:"Call instead of text",    desc:"Your voice matters. Use it",                   xp:50 },
-      { id:"s3", cat:"social", title:"Make plans",              desc:"Set a date — coffee, a walk, anything",        xp:65 },
-      { id:"s4", cat:"social", title:"Share something honest",  desc:"Tell someone how you're actually doing",       xp:80 },
-      { id:"s5", cat:"social", title:"Give a real compliment",  desc:"Something true. Something you mean",           xp:30 },
-      { id:"s6", cat:"social", title:"Ask for help",            desc:"Let one person in today",                      xp:75 },
+    const ALL_SOCIAL_POOL = [
+      { id:"s1",  cat:"social", title:"Text someone first",        desc:"Reach out before they reach you",                            xp:35 },
+      { id:"s2",  cat:"social", title:"Call instead of text",      desc:"Your voice matters. Use it",                                 xp:50 },
+      { id:"s3",  cat:"social", title:"Make plans",                desc:"Set a date — coffee, a walk, anything",                      xp:65 },
+      { id:"s4",  cat:"social", title:"Share something honest",    desc:"Tell someone how you're actually doing",                     xp:80 },
+      { id:"s5",  cat:"social", title:"Give a real compliment",    desc:"Something true. Something you mean",                         xp:30 },
+      { id:"s6",  cat:"social", title:"Ask for help",              desc:"Let one person in today",                                    xp:75 },
+      { id:"s7",  cat:"social", title:"Reply to a message you've ignored", desc:"You've been leaving it. Just reply today",           xp:40 },
+      { id:"s8",  cat:"social", title:"Check in on someone",       desc:"Ask how they're doing and actually listen",                  xp:45 },
+      { id:"s9",  cat:"social", title:"Say thank you to someone",  desc:"Someone who deserves to hear it. Tell them",                 xp:30 },
+      { id:"s10", cat:"social", title:"Share something you made",  desc:"A note, a photo, anything. Show someone a piece of you",     xp:55 },
+      { id:"s11", cat:"social", title:"Join an online community",  desc:"A forum, a group. One message. You're not alone",            xp:50 },
+      { id:"s12", cat:"social", title:"Spend time with a pet",     desc:"Yours or someone else's. Animals count as connection",       xp:25 },
     ];
+
+    // Daily rotation — seeded by date so everyone gets the same quests each day
+    // and they reset at midnight automatically
+    function getDailyQuests(pool, count, salt) {
+      const today = new Date();
+      const seed  = today.getFullYear() * 10000 + (today.getMonth()+1) * 100 + today.getDate() + salt;
+      const shuffled = [...pool].sort((a, b) => {
+        const ha = Math.sin(seed * a.id.charCodeAt(1)) * 10000;
+        const hb = Math.sin(seed * b.id.charCodeAt(1)) * 10000;
+        return (ha - Math.floor(ha)) - (hb - Math.floor(hb));
+      });
+      return shuffled.slice(0, count);
+    }
+
+    const HOME_QUESTS   = getDailyQuests(ALL_HOME_POOL,   5, 1);
+    const OUT_QUESTS    = getDailyQuests(ALL_OUT_POOL,    4, 2);
+    const SOCIAL_QUESTS = getDailyQuests(ALL_SOCIAL_POOL, 4, 3);
 
     const TOOLS = [
       { id:"breathe", title:"Box Breathing",        desc:"4-4-4-4 breathwork to settle the nervous system", duration:"4 min",  points:20 },
@@ -155,14 +196,162 @@
       const [step, setStep]       = useState("welcome");
       const [name, setName]       = useState("");
       const [emailMode, setEmailMode] = useState(false);
-      const [phoneMode, setPhoneMode] = useState(false);
       const [email, setEmail]     = useState("");
-      const [phone, setPhone]     = useState("");
-      const [code,  setCode]      = useState("");
-      const [codeSent, setCodeSent] = useState(false);
       const [loading, setLoading] = useState(false);
       const [msg, setMsg]         = useState("");
       const [msgColor, setMsgColor] = useState(G.goldSoft);
+
+      // Check if we're coming back from Google OAuth redirect
+      useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user) {
+            const n = session.user.user_metadata?.full_name ||
+                      session.user.user_metadata?.name ||
+                      session.user.email?.split("@")[0] || "Wanderer";
+            onLogin(n);
+          }
+        });
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (session?.user) {
+            const n = session.user.user_metadata?.full_name ||
+                      session.user.user_metadata?.name ||
+                      session.user.email?.split("@")[0] || "Wanderer";
+            onLogin(n);
+          }
+        });
+        return () => subscription.unsubscribe();
+      }, []);
+
+      const handleGoogle = async () => {
+        setLoading(true); setMsg("");
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: window.location.href }
+        });
+        if (error) { setMsg(error.message); setMsgColor(G.red); setLoading(false); }
+      };
+
+      const handleEmail = async () => {
+        if (!email.includes("@")) { setMsg("Please enter a valid email"); setMsgColor(G.red); return; }
+        setLoading(true); setMsg("");
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo: window.location.href }
+        });
+        setLoading(false);
+        if (error) { setMsg(error.message); setMsgColor(G.red); }
+        else { setMsg("Magic link sent! Check your email and click the link to sign in."); setMsgColor(G.sage); }
+      };
+
+      if (step === "name") return (
+        <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",
+          alignItems:"center",justifyContent:"center",padding:32,gap:24,
+          background:`radial-gradient(ellipse at 50% 20%,#2c1f08 0%,${G.bg} 65%)`}}>
+          <div style={{textAlign:"center"}}>
+            <Label style={{marginBottom:12,letterSpacing:8}}>one last thing</Label>
+            <Title size={30}>What should we call you?</Title>
+          </div>
+          <input value={name} onChange={e=>setName(e.target.value)}
+            placeholder="your name or a nickname..."
+            style={{width:"100%",maxWidth:340,padding:"16px 20px",borderRadius:18,
+              background:G.surface,border:`1px solid ${G.borderHi}`,
+              color:G.cream,fontSize:15,outline:"none"}} />
+          <button className="btn-hover" onClick={()=>onLogin(name.trim()||"Wanderer")} style={{
+            width:"100%",maxWidth:340,padding:"15px",borderRadius:18,cursor:"pointer",
+            background:`linear-gradient(135deg,${G.gold}28,${G.gold}10)`,
+            border:`1px solid ${G.gold}55`,color:G.gold,
+            fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700,letterSpacing:3}}>
+            BEGIN MY PATH
+          </button>
+        </div>
+      );
+
+      return (
+        <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",
+          alignItems:"center",justifyContent:"center",padding:32,
+          background:`radial-gradient(ellipse at 50% 20%,#2c1f08 0%,${G.bg} 65%)`}}>
+          <div style={{position:"absolute",top:-80,left:-80,width:400,height:400,
+            borderRadius:"50%",background:"radial-gradient(circle,rgba(212,168,85,0.1) 0%,transparent 70%)",
+            pointerEvents:"none"}} />
+
+          <div style={{textAlign:"center",marginBottom:48,width:"100%",maxWidth:340}}>
+            <Label style={{marginBottom:14,letterSpacing:8}}>welcome to</Label>
+            <Title size={44} style={{lineHeight:1,marginBottom:10}}>ClearPath</Title>
+            <p style={{fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",
+              color:G.muted,fontSize:15}}>grow through what you go through</p>
+          </div>
+
+          <div style={{width:"100%",maxWidth:340,display:"flex",flexDirection:"column",gap:10}}>
+            {!emailMode && (
+              <>
+                <button className="auth-btn" onClick={handleGoogle} disabled={loading}>
+                  <span style={{width:30,height:30,borderRadius:8,background:`${G.gold}18`,
+                    border:`1px solid ${G.border}`,display:"flex",alignItems:"center",
+                    justifyContent:"center",flexShrink:0}}>
+                    <svg width="14" height="14" viewBox="0 0 48 48">
+                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    </svg>
+                  </span>
+                  {loading ? "Redirecting to Google..." : "Continue with Google"}
+                </button>
+
+                <button className="auth-btn" onClick={()=>{ setEmailMode(true); setMsg(""); }}>
+                  <span style={{width:30,height:30,borderRadius:8,background:`${G.gold}18`,
+                    border:`1px solid ${G.border}`,display:"flex",alignItems:"center",
+                    justifyContent:"center",flexShrink:0,color:G.gold,fontSize:13}}>@</span>
+                  Continue with Email
+                </button>
+
+                {msg && <p style={{color:msgColor,fontSize:12,fontFamily:"'Lato',sans-serif",
+                  lineHeight:1.5,textAlign:"center"}}>{msg}</p>}
+
+                <div style={{display:"flex",alignItems:"center",gap:12,margin:"4px 0"}}>
+                  <div style={{flex:1,height:1,background:G.border}} />
+                  <span style={{color:G.mutedLo,fontSize:11,fontFamily:"'Lato',sans-serif"}}>or</span>
+                  <div style={{flex:1,height:1,background:G.border}} />
+                </div>
+
+                <button className="btn-hover" onClick={()=>setStep("name")} style={{
+                  width:"100%",padding:"14px",borderRadius:18,cursor:"pointer",
+                  background:"transparent",border:`1px solid ${G.mutedLo}`,
+                  color:G.muted,fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:3}}>
+                  CONTINUE ANONYMOUSLY
+                </button>
+              </>
+            )}
+
+            {emailMode && (
+              <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                <button onClick={()=>{setEmailMode(false);setMsg("");}} style={{
+                  background:"transparent",border:"none",color:G.muted,cursor:"pointer",
+                  fontFamily:"'Lato',sans-serif",fontSize:11,letterSpacing:2,
+                  textAlign:"left",marginBottom:4}}>← BACK</button>
+                <Label style={{marginBottom:4}}>enter your email</Label>
+                <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  onKeyDown={e=>e.key==="Enter"&&handleEmail()}
+                  style={{padding:"14px 18px",borderRadius:16,background:G.surface,
+                    border:`1px solid ${G.borderHi}`,color:G.cream,fontSize:14,outline:"none"}} />
+                {msg && <p style={{color:msgColor,fontSize:12,fontFamily:"'Lato',sans-serif",lineHeight:1.6}}>{msg}</p>}
+                <button className="btn-hover" onClick={handleEmail} disabled={loading} style={{
+                  padding:"14px",borderRadius:16,cursor:"pointer",
+                  background:`linear-gradient(135deg,${G.gold}22,${G.gold}08)`,
+                  border:`1px solid ${G.gold}44`,color:G.gold,
+                  fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700,letterSpacing:3}}>
+                  {loading ? "SENDING..." : "SEND MAGIC LINK"}
+                </button>
+                <p style={{color:G.mutedLo,fontSize:11,fontFamily:"'Lato',sans-serif",
+                  textAlign:"center",lineHeight:1.5}}>
+                  We'll email you a link — no password needed
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
 
       // Check if we're coming back from Google OAuth redirect
       useEffect(() => {
@@ -634,7 +823,12 @@
 
       return (
         <div style={{paddingBottom:20}}>
-          <div style={{padding:"36px 24px 16px"}}><Label style={{marginBottom:8}}>small steps</Label><Title size={30}>Daily Quests</Title></div>
+          <div style={{padding:"36px 24px 16px"}}>
+            <Label style={{marginBottom:8}}>small steps</Label>
+            <Title size={30}>Daily Quests</Title>
+            <p style={{color:G.mutedLo,fontSize:11,fontFamily:"'Lato',sans-serif",
+              letterSpacing:2,marginTop:8}}>NEW SET EVERY DAY AT MIDNIGHT</p>
+          </div>
           <div style={{display:"flex",gap:8,padding:"0 16px",marginBottom:16,overflowX:"auto"}}>
             {cats.map(c=>(
               <button key={c.id} onClick={()=>setCat(c.id)} style={{
