@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClearPath — one day at a time</title>
+  <meta name="description" content="A free app for people trying to stay sober. No judgment. No pressure. Just small steps forward." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #0b0906;
+      --bg2:      #100d08;
+      --gold:     #d4a855;
+      --goldsoft: #c9a070;
+      --goldfade: rgba(212,168,85,0.12);
+      --sage:     #9ab87a;
+      --sagefade: rgba(154,184,122,0.1);
+      --cream:    #f0ddb0;
+      --text:     #e0cfa0;
+      --muted:    #7a6a48;
+      --mutedlo:  #3a2e18;
+      --border:   rgba(212,168,85,0.15);
+      --borderhi: rgba(212,168,85,0.35);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Lato', sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--mutedlo); border-radius: 4px; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+    @keyframes drift    { 0%,100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-14px) rotate(3deg); } }
+    @keyframes drift2   { 0%,100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-20px) rotate(-4deg); } }
+    @keyframes shimmer  { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
+    @keyframes pulse    { 0%,100% { opacity:0.4; } 50% { opacity:0.8; } }
+    @keyframes lineGrow { from { width:0; } to { width:60px; } }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 20px 40px;
+      display: flex; justify-content: space-between; align-items: center;
+      background: linear-gradient(180deg, rgba(11,9,6,0.95) 0%, transparent 100%);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(212,168,85,0.06);
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 600;
+      color: var(--cream); letter-spacing: 1px;
+    }
+    .nav-logo span { color: var(--gold); }
+    .nav-cta {
+      padding: 10px 24px; border-radius: 30px;
+      background: linear-gradient(135deg, rgba(212,168,85,0.2), rgba(212,168,85,0.08));
+      border: 1px solid var(--borderhi);
+      color: var(--gold); font-family: 'Lato', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 3px;
+      text-decoration: none; transition: all 0.25s;
+    }
+    .nav-cta:hover { background: rgba(212,168,85,0.28); transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 120px 24px 80px;
+      position: relative; overflow: hidden;
+    }
+    .hero-orb {
+      position: absolute; border-radius: 50%; pointer-events: none;
+    }
+    .hero-orb-1 {
+      width: 600px; height: 600px; top: -200px; left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, rgba(212,168,85,0.08) 0%, transparent 70%);
+      animation: pulse 6s ease-in-out infinite;
+    }
+    .hero-orb-2 {
+      width: 300px; height: 300px; bottom: 100px; left: -100px;
+      background: radial-gradient(circle, rgba(154,184,122,0.07) 0%, transparent 70%);
+      animation: drift 8s ease-in-out infinite;
+    }
+    .hero-orb-3 {
+      width: 250px; height: 250px; top: 200px; right: -80px;
+      background: radial-gradient(circle, rgba(212,168,85,0.06) 0%, transparent 70%);
+      animation: drift2 10s ease-in-out infinite;
+    }
+    .hero-label {
+      font-size: 10px; letter-spacing: 6px; color: var(--muted);
+      text-transform: uppercase; margin-bottom: 24px;
+      animation: fadeUp 0.8s ease 0.2s both;
+    }
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(48px, 8vw, 88px);
+      font-weight: 300; color: var(--cream);
+      line-height: 1.05; letter-spacing: -1px;
+      margin-bottom: 12px;
+      animation: fadeUp 0.8s ease 0.4s both;
+    }
+    .hero-title em {
+      font-style: italic; color: var(--gold);
+    }
+    .hero-subtitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(16px, 2.5vw, 22px);
+      color: var(--muted); font-weight: 300;
+      max-width: 520px; line-height: 1.7;
+      margin: 0 auto 48px;
+      animation: fadeUp 0.8s ease 0.6s both;
+    }
+    .hero-btns {
+      display: flex; gap: 14px; flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp 0.8s ease 0.8s both;
+    }
+    .btn-primary {
+      padding: 16px 36px; border-radius: 50px;
+      background: linear-gradient(135deg, rgba(212,168,85,0.25), rgba(212,168,85,0.1));
+      border: 1px solid var(--borderhi);
+      color: var(--gold); font-family: 'Lato', sans-serif;
+      font-size: 12px; font-weight: 700; letter-spacing: 3px;
+      text-decoration: none; transition: all 0.25s;
+      cursor: pointer;
+    }
+    .btn-primary:hover { background: rgba(212,168,85,0.32); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(212,168,85,0.15); }
+    .btn-ghost {
+      padding: 16px 36px; border-radius: 50px;
+      background: transparent;
+      border: 1px solid var(--mutedlo);
+      color: var(--muted); font-family: 'Lato', sans-serif;
+      font-size: 12px; font-weight: 700; letter-spacing: 3px;
+      text-decoration: none; transition: all 0.25s;
+    }
+    .btn-ghost:hover { border-color: var(--muted); color: var(--text); transform: translateY(-2px); }
+    .hero-scroll {
+      position: absolute; bottom: 40px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      animation: fadeIn 1s ease 1.5s both;
+    }
+    .hero-scroll span {
+      font-size: 9px; letter-spacing: 4px; color: var(--mutedlo);
+      font-family: 'Lato', sans-serif;
+    }
+    .scroll-line {
+      width: 1px; height: 40px;
+      background: linear-gradient(180deg, var(--mutedlo), transparent);
+    }
+
+    /* ── HONEST SECTION ── */
+    .honest {
+      padding: 120px 24px;
+      max-width: 760px; margin: 0 auto;
+      text-align: center; position: relative;
+    }
+    .honest-line {
+      width: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 60px;
+      animation: lineGrow 1s ease 0.3s forwards;
+    }
+    .honest-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(22px, 3.5vw, 34px);
+      font-weight: 300; line-height: 1.75;
+      color: var(--text);
+    }
+    .honest-text em { color: var(--gold); font-style: italic; }
+    .honest-text strong { color: var(--cream); font-weight: 600; }
+
+    /* ── HOW IT WORKS ── */
+    .section {
+      padding: 100px 24px;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .section-label {
+      font-size: 9px; letter-spacing: 6px; color: var(--muted);
+      text-transform: uppercase; margin-bottom: 16px;
+      display: block;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 300; color: var(--cream);
+      line-height: 1.15; margin-bottom: 60px;
+    }
+    .section-title em { color: var(--gold); font-style: italic; }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 2px;
+    }
+    .step {
+      padding: 40px 32px;
+      background: rgba(255,245,220,0.03);
+      border: 1px solid var(--border);
+      transition: all 0.3s ease;
+      position: relative; overflow: hidden;
+    }
+    .step::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .step:hover { background: rgba(255,245,220,0.05); }
+    .step:hover::before { opacity: 1; }
+    .step-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 48px; color: var(--mutedlo);
+      font-weight: 300; line-height: 1;
+      margin-bottom: 20px;
+    }
+    .step-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; color: var(--cream);
+      font-weight: 600; margin-bottom: 12px;
+    }
+    .step-desc {
+      font-size: 14px; color: var(--muted);
+      line-height: 1.7; font-weight: 300;
+    }
+
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .feature-card {
+      padding: 36px 32px;
+      background: rgba(255,245,220,0.03);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .feature-card:hover {
+      background: rgba(255,245,220,0.055);
+      border-color: var(--borderhi);
+      transform: translateY(-3px);
+    }
+    .feature-tag {
+      display: inline-block;
+      font-size: 8px; letter-spacing: 3px;
+      color: var(--gold); font-weight: 700;
+      text-transform: uppercase;
+      background: rgba(212,168,85,0.1);
+      border: 1px solid rgba(212,168,85,0.2);
+      padding: 4px 12px; border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .feature-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px; color: var(--cream);
+      font-weight: 600; margin-bottom: 12px;
+      line-height: 1.2;
+    }
+    .feature-desc {
+      font-size: 14px; color: var(--muted);
+      line-height: 1.75; font-weight: 300;
+    }
+    .feature-card.highlight {
+      background: linear-gradient(145deg, rgba(212,168,85,0.08), rgba(154,184,122,0.04));
+      border-color: rgba(212,168,85,0.25);
+    }
+
+    /* ── TESTIMONIALS ── */
+    .testimonials-bg {
+      background: linear-gradient(180deg, var(--bg) 0%, #0f0c07 50%, var(--bg) 100%);
+      padding: 100px 24px;
+      position: relative; overflow: hidden;
+    }
+    .testimonials-bg::before {
+      content: '';
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 800px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(154,184,122,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .testimonials-inner {
+      max-width: 1100px; margin: 0 auto;
+    }
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px; margin-top: 60px;
+    }
+    .testimonial {
+      padding: 36px 32px;
+      background: rgba(255,245,220,0.03);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      position: relative;
+    }
+    .testimonial::before {
+      content: '"';
+      position: absolute; top: 20px; right: 28px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 80px; color: var(--mutedlo);
+      line-height: 1; font-weight: 300;
+    }
+    .testimonial-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px; color: var(--text);
+      line-height: 1.8; font-style: italic;
+      font-weight: 300; margin-bottom: 24px;
+    }
+    .testimonial-author {
+      font-size: 11px; letter-spacing: 3px;
+      color: var(--muted); text-transform: uppercase;
+    }
+    .testimonial-author span {
+      color: var(--gold); margin-right: 8px;
+    }
+    .testimonial.featured {
+      background: linear-gradient(145deg, rgba(212,168,85,0.06), rgba(154,184,122,0.03));
+      border-color: rgba(212,168,85,0.2);
+      grid-column: span 2;
+    }
+    @media (max-width: 640px) {
+      .testimonial.featured { grid-column: span 1; }
+    }
+    .testimonial.featured .testimonial-text {
+      font-size: 22px;
+    }
+
+    /* ── STATS ── */
+    .stats {
+      padding: 80px 24px;
+      max-width: 900px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      border: 1px solid var(--border);
+    }
+    .stat {
+      padding: 48px 32px; text-align: center;
+      border-right: 1px solid var(--border);
+      background: rgba(255,245,220,0.02);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 5vw, 56px);
+      color: var(--gold); font-weight: 300;
+      line-height: 1; margin-bottom: 12px;
+    }
+    .stat-label {
+      font-size: 10px; letter-spacing: 3px;
+      color: var(--muted); text-transform: uppercase;
+    }
+    @media (max-width: 500px) {
+      .stats { grid-template-columns: 1fr; }
+      .stat { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+
+    /* ── CTA FINAL ── */
+    .cta-section {
+      padding: 140px 24px;
+      text-align: center; position: relative;
+      overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 700px; height: 700px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(212,168,85,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-eyebrow {
+      font-size: 10px; letter-spacing: 6px; color: var(--sage);
+      text-transform: uppercase; margin-bottom: 24px; display: block;
+    }
+    .cta-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 6vw, 68px);
+      font-weight: 300; color: var(--cream);
+      line-height: 1.1; margin-bottom: 20px;
+      max-width: 700px; margin-left: auto; margin-right: auto;
+    }
+    .cta-title em { color: var(--gold); font-style: italic; }
+    .cta-sub {
+      font-size: 15px; color: var(--muted);
+      max-width: 440px; margin: 0 auto 48px;
+      line-height: 1.7; font-weight: 300;
+    }
+    .cta-fine {
+      margin-top: 20px;
+      font-size: 11px; color: var(--mutedlo);
+      letter-spacing: 2px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 40px 40px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px; color: var(--muted);
+      font-weight: 300;
+    }
+    .footer-logo span { color: var(--goldsoft); }
+    .footer-note {
+      font-size: 11px; color: var(--mutedlo);
+      letter-spacing: 1px;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      width: 100%; max-width: 200px;
+      height: 1px; margin: 0 auto;
+      background: linear-gradient(90deg, transparent, var(--mutedlo), transparent);
+    }
+
+    /* ── PHONE MOCKUP ── */
+    .phone-wrap {
+      position: relative; display: inline-block;
+      margin: 60px auto 0; animation: fadeUp 1s ease 1s both;
+    }
+    .phone {
+      width: 220px; height: 440px;
+      background: linear-gradient(145deg, #1a1410, #0f0c08);
+      border: 1.5px solid rgba(212,168,85,0.25);
+      border-radius: 36px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px; padding: 20px;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 60px rgba(212,168,85,0.06);
+      position: relative; overflow: hidden;
+    }
+    .phone::before {
+      content: '';
+      position: absolute; top: 14px; left: 50%;
+      transform: translateX(-50%);
+      width: 60px; height: 4px; border-radius: 4px;
+      background: rgba(212,168,85,0.2);
+    }
+    .phone-screen-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px; color: var(--cream);
+      font-weight: 300; text-align: center;
+      letter-spacing: 1px;
+    }
+    .phone-screen-sub {
+      font-size: 9px; letter-spacing: 3px;
+      color: var(--muted); text-transform: uppercase;
+    }
+    .phone-stat-row {
+      display: flex; gap: 20px; margin-top: 12px;
+    }
+    .phone-stat {
+      text-align: center;
+      padding: 14px 18px;
+      background: rgba(212,168,85,0.06);
+      border: 1px solid rgba(212,168,85,0.12);
+      border-radius: 12px;
+    }
+    .phone-stat-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px; color: var(--gold); font-weight: 300;
+    }
+    .phone-stat-label {
+      font-size: 7px; letter-spacing: 2px;
+      color: var(--muted); text-transform: uppercase; margin-top: 2px;
+    }
+    .phone-bar {
+      width: 100%; height: 3px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 4px; overflow: hidden;
+      margin-top: 8px;
+    }
+    .phone-bar-fill {
+      width: 65%; height: 100%;
+      background: linear-gradient(90deg, var(--sage), var(--gold));
+      border-radius: 4px;
+    }
+    .phone-quest {
+      width: 100%; padding: 12px 16px;
+      background: rgba(255,245,220,0.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .phone-quest-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px; color: var(--cream); margin-bottom: 3px;
+    }
+    .phone-quest-sub {
+      font-size: 9px; color: var(--muted); letter-spacing: 1px;
+    }
+    .phone-glow {
+      position: absolute; top: -60px; left: 50%;
+      transform: translateX(-50%);
+      width: 300px; height: 300px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(212,168,85,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      .section { padding: 70px 20px; }
+      .honest { padding: 80px 20px; }
+      footer { padding: 30px 20px; flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">Clear<span>Path</span></div>
+    <a href="https://clearpathh.netlify.app" class="nav-cta" target="_blank">OPEN APP</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-orb hero-orb-3"></div>
+
+    <p class="hero-label">built by someone who needed this · free · no judgment</p>
+    <h1 class="hero-title">
+      You don't have to<br/>
+      <em>be okay</em> yet.
+    </h1>
+    <p class="hero-subtitle">
+      ClearPath is a free app for people trying to stay sober.
+      No pressure. No perfection. Just one small step at a time.
+    </p>
+    <div class="hero-btns">
+      <a href="https://clearpathh.netlify.app" class="btn-primary" target="_blank">START FOR FREE</a>
+      <a href="#how" class="btn-ghost">SEE HOW IT WORKS</a>
+    </div>
+
+    <!-- phone mockup -->
+    <div class="phone-wrap">
+      <div class="phone-glow"></div>
+      <div class="phone">
+        <p class="phone-screen-sub">good to see you</p>
+        <p class="phone-screen-title">ClearPath</p>
+        <div class="phone-stat-row">
+          <div class="phone-stat">
+            <div class="phone-stat-num">14</div>
+            <div class="phone-stat-label">Streak</div>
+          </div>
+          <div class="phone-stat">
+            <div class="phone-stat-num">14</div>
+            <div class="phone-stat-label">Sober days</div>
+          </div>
+        </div>
+        <div style="width:100%;margin-top:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:10px;color:var(--muted);letter-spacing:2px;font-family:'Lato',sans-serif;">RANK — BLOSSOM</span>
+            <span style="font-size:10px;color:var(--muted);font-family:'Lato',sans-serif;">65%</span>
+          </div>
+          <div class="phone-bar"><div class="phone-bar-fill"></div></div>
+        </div>
+        <div class="phone-quest">
+          <div class="phone-quest-title">Open a window</div>
+          <div class="phone-quest-sub">+15 xp · at home quest</div>
+        </div>
+        <div class="phone-quest">
+          <div class="phone-quest-title">Step outside for 5 min</div>
+          <div class="phone-quest-sub">+40 xp · going out</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-scroll">
+      <span>SCROLL</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- HONEST SECTION -->
+  <section class="honest reveal">
+    <div class="honest-line"></div>
+    <p class="honest-text">
+      Most apps tell you to <em>"just go outside"</em> or <em>"think positive."</em><br/><br/>
+      <strong>We know that's not how it works.</strong><br/><br/>
+      Some days the bravest thing you do is make your bed.
+      Some days you don't leave the house at all.
+      <em>That's okay. That still counts.</em>
+    </p>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how">
+    <div class="reveal">
+      <span class="section-label">the process</span>
+      <h2 class="section-title">Simple enough for<br/><em>your hardest days</em></h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-num">01</div>
+        <div class="step-title">Check in daily</div>
+        <p class="step-desc">Mark another sober day. Watch your streak grow. Every day you check in, you earn points — and your streak bonus compounds the longer you go.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">02</div>
+        <div class="step-title">Choose your quests</div>
+        <p class="step-desc">Pick from tiny at-home tasks, gentle outdoor steps, or social challenges. Start with drinking a glass of water. There's no wrong place to begin.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">03</div>
+        <div class="step-title">Use the calm tools</div>
+        <p class="step-desc">Box breathing, grounding exercises, body scans. When anxiety spikes, open the app. The tools are short, simple, and actually work.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">04</div>
+        <div class="step-title">Write it down</div>
+        <p class="step-desc">Your private journal is yours alone. Vent, ramble, cry on the page. No one reads it. It's just a safe place to put the things you can't say out loud.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section" id="features" style="padding-top:0;">
+    <div class="reveal">
+      <span class="section-label">what's inside</span>
+      <h2 class="section-title">Built for the <em>whole journey</em></h2>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card highlight reveal">
+        <span class="feature-tag">Core</span>
+        <h3 class="feature-title">Sobriety Streak & Points</h3>
+        <p class="feature-desc">Check in every day to build your streak. The longer you go, the bigger the bonus. Watch your points grow into rank milestones — from Seedling all the way to Phoenix.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-tag">Quests</span>
+        <h3 class="feature-title">Daily Quests for Every Day</h3>
+        <p class="feature-desc">Three categories — at home, going outside, and social. Whether you're in bed or out in the world, there's always something small you can do.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-tag">Anxiety</span>
+        <h3 class="feature-title">Calm Garden Tools</h3>
+        <p class="feature-desc">Box breathing, 5-4-3-2-1 grounding, body scans, mindful walks. Six tools to interrupt anxiety before it takes over.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-tag">Private</span>
+        <h3 class="feature-title">Your Notebook</h3>
+        <p class="feature-desc">A completely private journal. Write entries, give them titles, go back and read them. No one else can see it. Ever.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-tag">Anchor</span>
+        <h3 class="feature-title">Why I Stay</h3>
+        <p class="feature-desc">Add notes and photos of your reasons. For the moments when you forget why you started. Open it and remember.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-tag">Free</span>
+        <h3 class="feature-title">No Ads. No Payment. Ever.</h3>
+        <p class="feature-desc">ClearPath is completely free. No subscription. No premium tier. No ads. Built by someone who just wanted something like this to exist.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="reveal" style="max-width:900px;margin:0 auto;padding:0 24px;">
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">0</div>
+        <div class="stat-label">cost to use</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">8</div>
+        <div class="stat-label">rank levels to reach</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">24</div>
+        <div class="stat-label">daily quests available</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials-bg" id="community">
+    <div class="testimonials-inner">
+      <div class="reveal">
+        <span class="section-label">from the community</span>
+        <h2 class="section-title">Real words from<br/><em>real people</em></h2>
+      </div>
+      <div class="testimonials-grid">
+        <div class="testimonial featured reveal">
+          <p class="testimonial-text">The first quest was "drink a glass of water." I hadn't gotten out of bed in two days. I did it. Then I did the next one. That was day one for me.</p>
+          <p class="testimonial-author"><span>—</span> Anonymous, Day 47</p>
+        </div>
+        <div class="testimonial reveal">
+          <p class="testimonial-text">I've tried every sobriety app. This is the only one that doesn't make me feel like I'm failing if I stay home.</p>
+          <p class="testimonial-author"><span>—</span> Anonymous, Day 23</p>
+        </div>
+        <div class="testimonial reveal">
+          <p class="testimonial-text">The notebook is where I go when I can't talk to anyone. It's become the most important part of my recovery.</p>
+          <p class="testimonial-author"><span>—</span> Anonymous, Day 81</p>
+        </div>
+        <div class="testimonial reveal">
+          <p class="testimonial-text">I didn't think a streak counter would matter to me. But seeing that number go up every morning changed something.</p>
+          <p class="testimonial-author"><span>—</span> Anonymous, Day 34</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="cta-section reveal">
+    <span class="cta-eyebrow">you belong here</span>
+    <h2 class="cta-title">
+      Today can be<br/><em>day one.</em>
+    </h2>
+    <p class="cta-sub">
+      No sign-up required to explore. No judgment if you've been here before.
+      Just open the app and take one small step.
+    </p>
+    <a href="https://clearpathh.netlify.app" class="btn-primary" target="_blank" style="font-size:13px;padding:18px 44px;">
+      OPEN CLEARPATH — FREE
+    </a>
+    <p class="cta-fine">no download needed &nbsp;·&nbsp; works on any phone &nbsp;·&nbsp; always free</p>
+  </section>
+
+  <div class="divider" style="margin-bottom:0;"></div>
+
+  <!-- BUILT BY -->
+  <section style="padding:100px 24px;max-width:680px;margin:0 auto;text-align:center;" class="reveal">
+    <span class="section-label" style="display:block;margin-bottom:20px;">a note from the builder</span>
+    <p style="font-family:'Cormorant Garamond',serif;font-size:clamp(20px,3vw,28px);
+      font-weight:300;color:var(--text);line-height:1.85;font-style:italic;">
+      "I didn't build this because I had the skills.<br/>
+      I built it because I needed it to exist.<br/><br/>
+      <span style="color:var(--cream);font-style:normal;font-weight:600;">This is for the version of you
+      that's still figuring it out.</span><br/>
+      The one who has bad days and good days and days<br/>
+      where just getting up feels like enough.<br/><br/>
+      <span style="color:var(--gold);">It is enough. You are enough.</span>"
+    </p>
+    <div style="width:40px;height:1px;background:var(--gold);opacity:0.4;margin:40px auto 0;"></div>
+  </section>
+
+  <div class="divider" style="margin-bottom:0;"></div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">Clear<span>Path</span></div>
+    <p class="footer-note">built with care &nbsp;·&nbsp; free forever &nbsp;·&nbsp; no ads</p>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach((el, i) => {
+      el.style.transitionDelay = `${(i % 4) * 0.08}s`;
+      observer.observe(el);
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  </script>
+</body>
+</html>
