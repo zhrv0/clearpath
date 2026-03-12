@@ -435,12 +435,12 @@
     }
 
     /* ── MOTIVATIONS ── */
-    function MotivationsScreen({ motivations, setMotivations }) {
+    function MotivationsScreen({ motivations, addMotivation, deleteMotivation }) {
       const [text, setText]     = useState("");
       const [adding, setAdding] = useState(false);
       const fileRef = useRef();
-      const addText = () => { if(!text.trim()) return; setMotivations(m=>[...m,{id:Date.now(),type:"text",content:text.trim()}]); setText(""); setAdding(false); };
-      const addPhoto = e => { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>setMotivations(m=>[...m,{id:Date.now(),type:"photo",content:ev.target.result}]); r.readAsDataURL(f); };
+      const addText = () => { if(!text.trim()) return; addMotivation({type:"text",content:text.trim()}); setText(""); setAdding(false); };
+      const addPhoto = e => { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>addMotivation({type:"photo",content:ev.target.result}); r.readAsDataURL(f); };
 
       return (
         <div style={{paddingBottom:20}}>
@@ -480,7 +480,7 @@
           )}
           {motivations.map(m=>(
             <Card key={m.id} style={{position:"relative"}}>
-              <button onClick={()=>setMotivations(ms=>ms.filter(x=>x.id!==m.id))} style={{
+              <button onClick={()=>deleteMotivation(m.id)} style={{
                 position:"absolute",top:14,right:14,background:"transparent",border:"none",
                 color:G.mutedLo,cursor:"pointer",fontSize:16,lineHeight:1,padding:4}}>×</button>
               {m.type==="photo"
@@ -494,15 +494,15 @@
     }
 
     /* ── NOTEBOOK ── */
-    function NotebookScreen({ entries, setEntries }) {
+    function NotebookScreen({ entries, addEntry, deleteEntry }) {
       const [open,  setOpen]  = useState(null);
       const [text,  setText]  = useState("");
       const [title, setTitle] = useState("");
       const save = () => {
         if(!text.trim()) return;
         const t = title.trim()||new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long"});
-        if(open==="new") setEntries(e=>[{id:Date.now(),title:t,body:text,date:new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})},...e]);
-        else setEntries(e=>e.map(x=>x.id===open?{...x,title:t,body:text}:x));
+        if(open==="new") addEntry({title:t,body:text,date:new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})});
+        // edit not persisted yet
         setOpen(null); setText(""); setTitle("");
       };
 
@@ -578,12 +578,14 @@
     }
 
     /* ── QUESTS ── */
-    function QuestsScreen({ done, setDone, notify }) {
+    function QuestsScreen({ done, completeQuest, setUserAndSave, user, notify }) {
       const [cat, setCat] = useState("home");
       const all = [...HOME_QUESTS,...OUT_QUESTS,...SOCIAL_QUESTS];
       const complete = q => {
         if(done.includes(q.id)){notify("Already done today");return;}
-        setDone(d=>[...d,q.id]); notify(`+${q.xp} xp`);
+        completeQuest(q.id);
+        setUserAndSave(u=>({...u,points:u.points+q.xp}));
+        notify(`+${q.xp} xp`);
       };
       const shown = all.filter(q=>q.cat===cat);
       const cats  = [{id:"home",label:"At Home"},{id:"out",label:"Going Out"},{id:"social",label:"Social"}];
@@ -641,7 +643,7 @@
     }
 
     /* ── CALM ── */
-    function CalmScreen({ completedTools, setCompletedTools, setPoints, notify }) {
+    function CalmScreen({ completedTools, completeTool, setPoints, notify }) {
       const [breathing, setBreathing] = useState(false);
       const [phase, setPhase]         = useState(0);
       const [count, setCount]         = useState(4);
@@ -652,7 +654,7 @@
         if(cycles>=4){
           setBreathing(false);
           if(!completedTools.includes("breathe")){
-            setCompletedTools(p=>[...p,"breathe"]);
+            completeTool("breathe");
             setPoints(p=>p+20);
             notify("+20 pts — beautiful breathwork");
           }
@@ -673,7 +675,7 @@
       const handleTool = t => {
         if(t.id==="breathe"){setBreathing(true);setPhase(0);setCount(4);setCycles(0);return;}
         if(completedTools.includes(t.id)){notify("Already done today");return;}
-        setCompletedTools(p=>[...p,t.id]);
+        completeTool(t.id);
         setPoints(p=>p+t.points);
         notify(`+${t.points} pts`);
       };
@@ -821,7 +823,7 @@
 
     /* ── ROOT ── */
     function App() {
-      const [loggedIn, setLoggedIn] = useState(false);
+      const [session, setSession]   = useState(undefined);
       const [user, setUser]         = useState({name:"",bio:"",why:"",avatar:null,points:0,streak:0,soberDays:0,lastCheckIn:null});
       const [tab, setTab]           = useState("home");
       const [doneQuests, setDoneQuests]   = useState([]);
@@ -829,9 +831,113 @@
       const [motivations, setMotivations] = useState([]);
       const [entries, setEntries]         = useState([]);
       const [toast, setToast]             = useState(null);
+      const [loading, setLoading]         = useState(true);
 
       const notify = msg => { setToast(msg); setTimeout(()=>setToast(null),3800); };
-      const setPoints = fn => setUser(u=>({...u,points:fn(u.points)}));
+
+      useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          setSession(session);
+          if (session) loadAllData(session.user.id);
+          else setLoading(false);
+        });
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          setSession(session);
+          if (session) loadAllData(session.user.id);
+          else setLoading(false);
+        });
+        return () => subscription.unsubscribe();
+      }, []);
+
+      const loadAllData = async (uid) => {
+        setLoading(true);
+        const today = new Date().toISOString().split("T")[0];
+        const [profileRes, questsRes, toolsRes, motivationsRes, entriesRes] = await Promise.all([
+          supabase.from("profiles").select("*").eq("id", uid).single(),
+          supabase.from("completed_quests").select("quest_id").eq("user_id", uid).eq("completed_date", today),
+          supabase.from("completed_tools").select("tool_id").eq("user_id", uid).eq("completed_date", today),
+          supabase.from("motivations").select("*").eq("user_id", uid).order("created_at", {ascending: false}),
+          supabase.from("journal_entries").select("*").eq("user_id", uid).order("created_at", {ascending: false}),
+        ]);
+        if (profileRes.data) {
+          const p = profileRes.data;
+          setUser({ name: p.name||"Wanderer", bio: p.bio||"", why: p.why||"",
+            avatar: p.avatar_url||null, points: p.points||0, streak: p.streak||0,
+            soberDays: p.sober_days||0, lastCheckIn: p.last_check_in||null });
+        }
+        if (questsRes.data)      setDoneQuests(questsRes.data.map(q => q.quest_id));
+        if (toolsRes.data)       setCompletedTools(toolsRes.data.map(t => t.tool_id));
+        if (motivationsRes.data) setMotivations(motivationsRes.data);
+        if (entriesRes.data)     setEntries(entriesRes.data);
+        setLoading(false);
+      };
+
+      const saveProfile = async (u) => {
+        const s = await supabase.auth.getSession();
+        const uid = s.data.session?.user?.id;
+        if (!uid) return;
+        await supabase.from("profiles").upsert({
+          id: uid, name: u.name, bio: u.bio, why: u.why,
+          avatar_url: u.avatar, points: u.points,
+          streak: u.streak, sober_days: u.soberDays, last_check_in: u.lastCheckIn,
+        });
+      };
+
+      const setUserAndSave = (fn) => {
+        setUser(prev => {
+          const next = typeof fn === "function" ? fn(prev) : fn;
+          saveProfile(next);
+          return next;
+        });
+      };
+
+      const setPoints = fn => setUserAndSave(u => ({...u, points: fn(u.points)}));
+
+      const completeQuest = async (questId) => {
+        if (doneQuests.includes(questId)) return false;
+        const today = new Date().toISOString().split("T")[0];
+        const s = await supabase.auth.getSession();
+        const uid = s.data.session?.user?.id;
+        if (uid) await supabase.from("completed_quests").insert({ user_id: uid, quest_id: questId, completed_date: today });
+        setDoneQuests(d => [...d, questId]);
+        return true;
+      };
+
+      const completeTool = async (toolId) => {
+        if (completedTools.includes(toolId)) return false;
+        const today = new Date().toISOString().split("T")[0];
+        const s = await supabase.auth.getSession();
+        const uid = s.data.session?.user?.id;
+        if (uid) await supabase.from("completed_tools").insert({ user_id: uid, tool_id: toolId, completed_date: today });
+        setCompletedTools(t => [...t, toolId]);
+        return true;
+      };
+
+      const addMotivation = async (motivation) => {
+        const s = await supabase.auth.getSession();
+        const uid = s.data.session?.user?.id;
+        if (!uid) { setMotivations(m => [{id: Date.now(), ...motivation}, ...m]); return; }
+        const { data } = await supabase.from("motivations").insert({ user_id: uid, ...motivation }).select().single();
+        if (data) setMotivations(m => [data, ...m]);
+      };
+
+      const deleteMotivation = async (id) => {
+        await supabase.from("motivations").delete().eq("id", id);
+        setMotivations(m => m.filter(x => x.id !== id));
+      };
+
+      const addEntry = async (entry) => {
+        const s = await supabase.auth.getSession();
+        const uid = s.data.session?.user?.id;
+        if (!uid) { setEntries(e => [{id: Date.now(), ...entry}, ...e]); return; }
+        const { data } = await supabase.from("journal_entries").insert({ user_id: uid, ...entry }).select().single();
+        if (data) setEntries(e => [data, ...e]);
+      };
+
+      const deleteEntry = async (id) => {
+        await supabase.from("journal_entries").delete().eq("id", id);
+        setEntries(e => e.filter(x => x.id !== id));
+      };
 
       const TABS = [
         {id:"home",label:"Home"},{id:"calm",label:"Calm"},
@@ -839,7 +945,15 @@
         {id:"notebook",label:"Journal"},{id:"profile",label:"Profile"},
       ];
 
-      if(!loggedIn) return <LoginScreen onLogin={name=>{setUser(u=>({...u,name}));setLoggedIn(true);}} />;
+      if (loading || session === undefined) return (
+        <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",
+          background:G.bg,flexDirection:"column",gap:16}}>
+          <p style={{fontFamily:"'Cormorant Garamond',serif",fontSize:28,color:G.gold,fontWeight:300}}>ClearPath</p>
+          <p style={{fontFamily:"'Lato',sans-serif",fontSize:10,letterSpacing:4,color:G.mutedLo}}>LOADING...</p>
+        </div>
+      );
+
+      if (!session) return <LoginScreen onLogin={()=>{}} />;
 
       return (
         <div style={{minHeight:"100vh",maxWidth:430,margin:"0 auto",
@@ -851,12 +965,12 @@
             animation:"orbDrift 9s ease-in-out infinite"}} />
           {toast && <Toast msg={toast} />}
           <div style={{animation:"riseIn 0.4s ease",position:"relative",zIndex:1}}>
-            {tab==="home"        && <HomeScreen user={user} setUser={setUser} notify={notify} setTab={setTab} />}
-            {tab==="calm"        && <CalmScreen completedTools={completedTools} setCompletedTools={setCompletedTools} setPoints={setPoints} notify={notify} />}
-            {tab==="quests"      && <QuestsScreen done={doneQuests} setDone={setDoneQuests} notify={notify} />}
-            {tab==="motivations" && <MotivationsScreen motivations={motivations} setMotivations={setMotivations} />}
-            {tab==="notebook"    && <NotebookScreen entries={entries} setEntries={setEntries} />}
-            {tab==="profile"     && <ProfileScreen user={user} setUser={setUser} />}
+            {tab==="home"        && <HomeScreen user={user} setUser={setUserAndSave} notify={notify} setTab={setTab} />}
+            {tab==="calm"        && <CalmScreen completedTools={completedTools} completeTool={completeTool} setPoints={setPoints} notify={notify} />}
+            {tab==="quests"      && <QuestsScreen done={doneQuests} completeQuest={completeQuest} setUserAndSave={setUserAndSave} user={user} notify={notify} />}
+            {tab==="motivations" && <MotivationsScreen motivations={motivations} addMotivation={addMotivation} deleteMotivation={deleteMotivation} />}
+            {tab==="notebook"    && <NotebookScreen entries={entries} addEntry={addEntry} deleteEntry={deleteEntry} />}
+            {tab==="profile"     && <ProfileScreen user={user} setUser={setUserAndSave} />}
           </div>
           <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",
             width:"100%",maxWidth:430,zIndex:100,
