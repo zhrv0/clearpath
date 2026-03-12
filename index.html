@@ -861,9 +861,14 @@
         ]);
         if (profileRes.data) {
           const p = profileRes.data;
+          // If no check-in ever recorded, treat streak/days as 0 (wipes old demo data)
+          const hasRealData = !!p.last_check_in;
           setUser({ name: p.name||"Wanderer", bio: p.bio||"", why: p.why||"",
-            avatar: p.avatar_url||null, points: p.points||0, streak: p.streak||0,
-            soberDays: p.sober_days||0, lastCheckIn: p.last_check_in||null });
+            avatar: p.avatar_url||null,
+            points: hasRealData ? (p.points||0) : 0,
+            streak: hasRealData ? (p.streak||0) : 0,
+            soberDays: hasRealData ? (p.sober_days||0) : 0,
+            lastCheckIn: p.last_check_in||null });
         }
         if (questsRes.data)      setDoneQuests(questsRes.data.map(q => q.quest_id));
         if (toolsRes.data)       setCompletedTools(toolsRes.data.map(t => t.tool_id));
@@ -945,6 +950,8 @@
         {id:"notebook",label:"Journal"},{id:"profile",label:"Profile"},
       ];
 
+      const [anonIn, setAnonIn] = useState(false);
+
       if (loading || session === undefined) return (
         <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",
           background:G.bg,flexDirection:"column",gap:16}}>
@@ -953,7 +960,10 @@
         </div>
       );
 
-      if (!session) return <LoginScreen onLogin={()=>{}} />;
+      if (!session && !anonIn) return <LoginScreen onLogin={(name) => {
+        setUser(u => ({...u, name: name||"Wanderer", points:0, streak:0, soberDays:0}));
+        setAnonIn(true);
+      }} />;
 
       return (
         <div style={{minHeight:"100vh",maxWidth:430,margin:"0 auto",
