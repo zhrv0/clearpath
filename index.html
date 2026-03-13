@@ -50,7 +50,14 @@
     /* ── SUPABASE ── */
     const SUPA_URL = "https://vnyqcreioioryfvnmyqk.supabase.co";
     const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZueXFjcmVpb2lvcnlmdm5teXFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNDA1NTAsImV4cCI6MjA4ODgxNjU1MH0.LRl3S2p2XaCMU-szoOibZHBtHVF5rDQe7LP9Q8fMhwg";
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY, {
+      auth: {
+        persistSession: true,
+        storageKey: "clearpath-auth",
+        storage: window.localStorage,
+        detectSessionInUrl: true,
+      }
+    });
 
     /* ── PALETTE ── */
     const G = {
@@ -824,6 +831,7 @@
     /* ── ROOT ── */
     function App() {
       const [session, setSession]   = useState(undefined);
+      const [anonIn, setAnonIn]     = useState(false);
       const [user, setUser]         = useState({name:"",bio:"",why:"",avatar:null,points:0,streak:0,soberDays:0,lastCheckIn:null});
       const [tab, setTab]           = useState("home");
       const [doneQuests, setDoneQuests]   = useState([]);
@@ -950,8 +958,6 @@
         {id:"notebook",label:"Journal"},{id:"profile",label:"Profile"},
       ];
 
-      const [anonIn, setAnonIn] = useState(false);
-
       if (loading || session === undefined) return (
         <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",
           background:G.bg,flexDirection:"column",gap:16}}>
@@ -961,7 +967,7 @@
       );
 
       if (!session && !anonIn) return <LoginScreen onLogin={(name) => {
-        setUser(u => ({...u, name: name||"Wanderer", points:0, streak:0, soberDays:0}));
+        setUser({name: name||"Wanderer", bio:"", why:"", avatar:null, points:0, streak:0, soberDays:0, lastCheckIn:null});
         setAnonIn(true);
       }} />;
 
