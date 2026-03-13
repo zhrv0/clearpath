@@ -230,12 +230,10 @@
 
     /* ── LOGIN ── */
     function LoginScreen({ onLogin }) {
-      const [step, setStep]   = useState("welcome");
-      const [name, setName]   = useState("");
+      const [step, setStep]     = useState("welcome");
+      const [name, setName]     = useState("");
       const [loading, setLoading] = useState(false);
-      const [msg, setMsg]     = useState("");
-
-      // Auth is handled entirely by the App component's listener
+      const [msg, setMsg]       = useState("");
 
       const handleGoogle = async () => {
         setLoading(true); setMsg("");
@@ -276,213 +274,40 @@
           <div style={{position:"absolute",top:-80,left:-80,width:400,height:400,
             borderRadius:"50%",background:"radial-gradient(circle,rgba(212,168,85,0.1) 0%,transparent 70%)",
             pointerEvents:"none"}} />
-
           <div style={{textAlign:"center",marginBottom:48,width:"100%",maxWidth:340}}>
             <Label style={{marginBottom:14,letterSpacing:8}}>welcome to</Label>
             <Title size={44} style={{lineHeight:1,marginBottom:10}}>ClearPath</Title>
             <p style={{fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",
               color:G.muted,fontSize:15}}>grow through what you go through</p>
           </div>
-
-          <div style={{width:"100%",maxWidth:340,display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{width:"100%",maxWidth:340,display:"flex",flexDirection:"column",gap:12}}>
             <button className="auth-btn" onClick={handleGoogle} disabled={loading}>
-                  <span style={{width:30,height:30,borderRadius:8,background:`${G.gold}18`,
-                    border:`1px solid ${G.border}`,display:"flex",alignItems:"center",
-                    justifyContent:"center",flexShrink:0}}>
-                    <svg width="14" height="14" viewBox="0 0 48 48">
-                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                    </svg>
-                  </span>
-                  {loading ? "Redirecting to Google..." : "Continue with Google"}
-                </button>
-
-                {msg && <p style={{color:G.red,fontSize:12,fontFamily:"'Lato',sans-serif",
-                  lineHeight:1.5,textAlign:"center"}}>{msg}</p>}
-
-                <div style={{display:"flex",alignItems:"center",gap:12,margin:"4px 0"}}>
-                  <div style={{flex:1,height:1,background:G.border}} />
-                  <span style={{color:G.mutedLo,fontSize:11,fontFamily:"'Lato',sans-serif"}}>or</span>
-                  <div style={{flex:1,height:1,background:G.border}} />
-                </div>
-
-                <button className="btn-hover" onClick={()=>setStep("name")} style={{
-                  width:"100%",padding:"14px",borderRadius:18,cursor:"pointer",
-                  background:"transparent",border:`1px solid ${G.mutedLo}`,
-                  color:G.muted,fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:3}}>
-                  CONTINUE ANONYMOUSLY
-                </button>
-                  placeholder="you@example.com"
-                  onKeyDown={e=>e.key==="Enter"&&handleEmail()}
-                  style={{padding:"14px 18px",borderRadius:16,background:G.surface,
-                    border:`1px solid ${G.borderHi}`,color:G.cream,fontSize:14,outline:"none"}} />
-                {msg && <p style={{color:msgColor,fontSize:12,fontFamily:"'Lato',sans-serif",lineHeight:1.6}}>{msg}</p>}
-                <button className="btn-hover" onClick={handleEmail} disabled={loading} style={{
-                  padding:"14px",borderRadius:16,cursor:"pointer",
-                  background:`linear-gradient(135deg,${G.gold}22,${G.gold}08)`,
-                  border:`1px solid ${G.gold}44`,color:G.gold,
-                  fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700,letterSpacing:3}}>
-                  {loading ? "SENDING..." : "SEND MAGIC LINK"}
-                </button>
-                <p style={{color:G.mutedLo,fontSize:11,fontFamily:"'Lato',sans-serif",
-                  textAlign:"center",lineHeight:1.5}}>
-                  We'll email you a link — no password needed
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-
-    }
-
-    /* ── PROFILE ── */
-    function ProfileScreen({ user, setUser, onSignOut }) {
-      const [editing, setEditing] = useState(false);
-      const [name, setName]       = useState(user.name);
-      const [bio,  setBio]        = useState(user.bio  || "");
-      const [why,  setWhy]        = useState(user.why  || "");
-      const fileRef = useRef();
-      const save = () => { setUser(u=>({...u,name,bio,why})); setEditing(false); };
-
-      return (
-        <div style={{paddingBottom:20}}>
-          <div style={{padding:"36px 24px 20px"}}><Label style={{marginBottom:8}}>your space</Label><Title size={30}>Profile</Title></div>
-          <Card>
-            <div style={{display:"flex",alignItems:"center",gap:20,marginBottom:24}}>
-              <div onClick={()=>fileRef.current?.click()} style={{
-                width:72,height:72,borderRadius:"50%",flexShrink:0,
-                background:`linear-gradient(135deg,${G.gold}30,${G.sage}20)`,
-                border:`1.5px solid ${G.border}`,display:"flex",
-                alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden"}}>
-                {user.avatar
-                  ? <img src={user.avatar} style={{width:"100%",height:"100%",objectFit:"cover"}} />
-                  : <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:28,color:G.gold}}>
-                      {user.name[0]?.toUpperCase()}
-                    </span>}
-              </div>
-              <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}}
-                onChange={e=>{
-                  const f=e.target.files[0]; if(!f) return;
-                  const r=new FileReader();
-                  r.onload=ev=>setUser(u=>({...u,avatar:ev.target.result}));
-                  r.readAsDataURL(f);
-                }} />
-              <div style={{flex:1}}>
-                {editing
-                  ? <input value={name} onChange={e=>setName(e.target.value)}
-                      style={{background:"transparent",border:`1px solid ${G.borderHi}`,borderRadius:10,
-                        padding:"6px 12px",color:G.cream,fontFamily:"'Cormorant Garamond',serif",
-                        fontSize:20,width:"100%",outline:"none"}} />
-                  : <Title size={22}>{user.name}</Title>}
-                <Label style={{marginTop:5}}>tap avatar to change</Label>
-              </div>
+              <span style={{width:30,height:30,borderRadius:8,background:`${G.gold}18`,
+                border:`1px solid ${G.border}`,display:"flex",alignItems:"center",
+                justifyContent:"center",flexShrink:0}}>
+                <svg width="14" height="14" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+              </span>
+              {loading ? "Redirecting to Google..." : "Continue with Google"}
+            </button>
+            {msg && <p style={{color:G.red,fontSize:12,fontFamily:"'Lato',sans-serif",
+              textAlign:"center"}}>{msg}</p>}
+            <div style={{display:"flex",alignItems:"center",gap:12,margin:"4px 0"}}>
+              <div style={{flex:1,height:1,background:G.border}} />
+              <span style={{color:G.mutedLo,fontSize:11,fontFamily:"'Lato',sans-serif"}}>or</span>
+              <div style={{flex:1,height:1,background:G.border}} />
             </div>
-            <Label style={{marginBottom:8}}>about me</Label>
-            {editing
-              ? <textarea value={bio} onChange={e=>setBio(e.target.value)} rows={3}
-                  placeholder="a few words about yourself..."
-                  style={{width:"100%",background:"transparent",border:`1px solid ${G.borderHi}`,
-                    borderRadius:12,padding:"10px 14px",color:G.text,resize:"none",
-                    fontSize:13,outline:"none",lineHeight:1.6,marginBottom:16}} />
-              : <p style={{color:G.textDim,fontSize:14,lineHeight:1.6,marginBottom:16,minHeight:40,
-                  fontFamily:"'Lato',sans-serif"}}>{user.bio||"Nothing written yet..."}</p>}
-            <Label style={{marginBottom:8}}>why i chose this path</Label>
-            {editing
-              ? <textarea value={why} onChange={e=>setWhy(e.target.value)} rows={3}
-                  placeholder="your reason for being here..."
-                  style={{width:"100%",background:"transparent",border:`1px solid ${G.borderHi}`,
-                    borderRadius:12,padding:"10px 14px",color:G.text,resize:"none",
-                    fontSize:13,outline:"none",lineHeight:1.6,marginBottom:16}} />
-              : <p style={{color:G.textDim,fontSize:14,lineHeight:1.6,marginBottom:16,
-                  fontStyle:"italic",minHeight:40,fontFamily:"'Lato',sans-serif"}}>
-                  {user.why||"Your reason is yours to define..."}
-                </p>}
-            <Btn onClick={editing?save:()=>setEditing(true)} color={editing?G.sage:G.gold}>
-              {editing?"SAVE CHANGES":"EDIT PROFILE"}
-            </Btn>
-          </Card>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,margin:"0 16px 14px"}}>
-            {[{label:"Sober Days",value:user.soberDays},{label:"Streak",value:user.streak},{label:"Points",value:user.points}].map(s=>(
-              <div key={s.label} style={{background:G.surface,border:`1px solid ${G.border}`,
-                borderRadius:18,padding:"18px 10px",textAlign:"center"}}>
-                <p style={{fontFamily:"'Cormorant Garamond',serif",fontSize:28,color:G.gold,fontWeight:700}}>{s.value}</p>
-                <Label style={{marginTop:4,letterSpacing:2}}>{s.label}</Label>
-              </div>
-            ))}
-          </div>
-          <div style={{margin:"8px 16px 20px"}}>
-            <button onClick={onSignOut} style={{
+            <button className="btn-hover" onClick={()=>setStep("name")} style={{
               width:"100%",padding:"14px",borderRadius:18,cursor:"pointer",
               background:"transparent",border:`1px solid ${G.mutedLo}`,
-              color:G.muted,fontFamily:"'Lato',sans-serif",fontSize:11,
-              fontWeight:700,letterSpacing:3,transition:"all 0.2s"}}
-              onMouseOver={e=>e.target.style.borderColor="#c47a5a"}
-              onMouseOut={e=>e.target.style.borderColor=G.mutedLo}>
-              SIGN OUT
+              color:G.muted,fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:3}}>
+              CONTINUE ANONYMOUSLY
             </button>
           </div>
-        </div>
-      );
-    }
-
-    /* ── MOTIVATIONS ── */
-    function MotivationsScreen({ motivations, addMotivation, deleteMotivation }) {
-      const [text, setText]     = useState("");
-      const [adding, setAdding] = useState(false);
-      const fileRef = useRef();
-      const addText = () => { if(!text.trim()) return; addMotivation({type:"text",content:text.trim()}); setText(""); setAdding(false); };
-      const addPhoto = e => { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>addMotivation({type:"photo",content:ev.target.result}); r.readAsDataURL(f); };
-
-      return (
-        <div style={{paddingBottom:20}}>
-          <div style={{padding:"36px 24px 20px"}}>
-            <Label style={{marginBottom:8}}>your anchor</Label>
-            <Title size={30}>Why I Stay</Title>
-            <p style={{color:G.muted,fontSize:13,marginTop:6,fontFamily:"'Lato',sans-serif",lineHeight:1.6}}>
-              Add words or photos — reasons to return to when things get hard.
-            </p>
-          </div>
-          <div style={{display:"flex",gap:10,margin:"0 16px 16px"}}>
-            <Btn onClick={()=>setAdding(a=>!a)} color={G.gold} style={{flex:1}}>+ ADD NOTE</Btn>
-            <Btn onClick={()=>fileRef.current?.click()} color={G.sage} style={{flex:1}}>+ ADD PHOTO</Btn>
-            <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={addPhoto} />
-          </div>
-          {adding && (
-            <Card>
-              <Label style={{marginBottom:10}}>write your reason</Label>
-              <textarea value={text} onChange={e=>setText(e.target.value)} rows={4}
-                placeholder="What are you fighting for? Who needs you? What do you want your life to feel like?..."
-                style={{width:"100%",background:"transparent",border:`1px solid ${G.borderHi}`,
-                  borderRadius:14,padding:"12px 16px",color:G.text,resize:"none",
-                  fontSize:14,outline:"none",lineHeight:1.7,marginBottom:14}} />
-              <div style={{display:"flex",gap:10}}>
-                <Btn onClick={addText} color={G.gold} style={{flex:1}}>SAVE</Btn>
-                <Btn onClick={()=>setAdding(false)} color={G.muted} style={{flex:1}}>CANCEL</Btn>
-              </div>
-            </Card>
-          )}
-          {motivations.length===0 && !adding && (
-            <div style={{textAlign:"center",padding:"50px 32px"}}>
-              <p style={{fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",
-                color:G.mutedLo,fontSize:18,lineHeight:1.8}}>
-                "Your reasons are waiting to be named.<br/>Start with one."
-              </p>
-            </div>
-          )}
-          {motivations.map(m=>(
-            <Card key={m.id} style={{position:"relative"}}>
-              <button onClick={()=>deleteMotivation(m.id)} style={{
-                position:"absolute",top:14,right:14,background:"transparent",border:"none",
-                color:G.mutedLo,cursor:"pointer",fontSize:16,lineHeight:1,padding:4}}>×</button>
-              {m.type==="photo"
-                ? <img src={m.content} style={{width:"100%",borderRadius:14,display:"block"}} />
-                : <p style={{fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",
-                    fontSize:17,color:G.text,lineHeight:1.75,paddingRight:24}}>{m.content}</p>}
-            </Card>
-          ))}
         </div>
       );
     }
