@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>ClearPath</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%230e0c08'/%3E%3Cpath d='M65 25 C65 25 30 28 28 50 C26 72 55 75 65 73 C55 70 38 63 40 50 C42 37 62 35 65 25Z' fill='%23d4a855'/%3E%3Cpath d='M58 30 C58 30 45 45 48 58 C50 68 60 72 65 73 C58 68 50 62 50 52 C50 42 58 30 58 30Z' fill='%23d4a855' opacity='0.6'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
   <style>
@@ -232,26 +233,7 @@
       const [msg, setMsg]         = useState("");
       const [msgColor, setMsgColor] = useState(G.goldSoft);
 
-      // Check if we're coming back from Google OAuth redirect
-      useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session?.user) {
-            const n = session.user.user_metadata?.full_name ||
-                      session.user.user_metadata?.name ||
-                      session.user.email?.split("@")[0] || "Wanderer";
-            onLogin(n);
-          }
-        });
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-          if (session?.user) {
-            const n = session.user.user_metadata?.full_name ||
-                      session.user.user_metadata?.name ||
-                      session.user.email?.split("@")[0] || "Wanderer";
-            onLogin(n);
-          }
-        });
-        return () => subscription.unsubscribe();
-      }, []);
+      // Auth is handled entirely by the App component's listener
 
       const handleGoogle = async () => {
         setLoading(true); setMsg("");
@@ -900,14 +882,22 @@
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-          setSession(session);
+          if (event === "SIGNED_OUT") {
+            setSession(null);
+            setAnonIn(false);
+            setUser({name:"",bio:"",why:"",avatar:null,points:0,streak:0,soberDays:0,lastCheckIn:null});
+            setDoneQuests([]); setCompletedTools([]); setMotivations([]); setEntries([]);
+            setLoading(false);
+            return;
+          }
           if (session) {
-            // Clean URL after OAuth redirect
+            setSession(session);
             if (window.location.hash.includes("access_token")) {
               window.history.replaceState({}, document.title, window.location.pathname);
             }
             loadAllData(session.user.id);
           } else {
+            setSession(null);
             setLoading(false);
           }
         });
