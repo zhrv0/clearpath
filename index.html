@@ -56,6 +56,7 @@
         storageKey: "clearpath-auth",
         storage: window.localStorage,
         detectSessionInUrl: true,
+        flowType: "implicit",
       }
     });
 
@@ -102,6 +103,16 @@
       { id:"h18", cat:"home", title:"Do one thing you've avoided",desc:"The thing on your list. Just one. Start and stop is fine",     xp:40 },
       { id:"h19", cat:"home", title:"Change your bedsheets",      desc:"Fresh sheets feel like a reset. You deserve that",             xp:30 },
       { id:"h20", cat:"home", title:"Sit outside your door",      desc:"Just the step or the balcony. Counts as outside",              xp:15 },
+      { id:"h21", cat:"home", title:"Do 5 minutes of cleaning",   desc:"One drawer, one shelf, one corner. Small counts",               xp:20 },
+      { id:"h22", cat:"home", title:"Watch something that makes you laugh", desc:"Comedy, a clip, anything. Laughter is medicine",        xp:15 },
+      { id:"h23", cat:"home", title:"Write down 3 worries",        desc:"Get them out of your head and onto paper. Then close it",       xp:25 },
+      { id:"h24", cat:"home", title:"Do something creative",       desc:"Draw, write, hum, rearrange. Anything expressive",              xp:30 },
+      { id:"h25", cat:"home", title:"Take your medication",        desc:"If you have any. Today is a good day to remember",              xp:20 },
+      { id:"h26", cat:"home", title:"Eat breakfast",               desc:"Even something small. Start the day with fuel",                 xp:20 },
+      { id:"h27", cat:"home", title:"Tidy your phone screen",      desc:"Delete apps you don't use. A small digital reset",              xp:10 },
+      { id:"h28", cat:"home", title:"Step away from screens for 20 min", desc:"Read, sit, stare at the ceiling. Just be offline",        xp:30 },
+      { id:"h29", cat:"home", title:"Write a letter you won't send", desc:"To anyone. Say what you can't say out loud",                  xp:35 },
+      { id:"h30", cat:"home", title:"Hug someone or something",    desc:"A person, a pet, a pillow. Physical comfort is real",           xp:20 },
     ];
 
     const ALL_OUT_POOL = [
@@ -120,6 +131,13 @@
       { id:"o13", cat:"out", title:"Sit in a place you like",    desc:"Somewhere that feels safe or calm. Just exist there",          xp:50 },
       { id:"o14", cat:"out", title:"Go to a library or bookshop",desc:"You don't have to buy anything. Just be there",                xp:55 },
       { id:"o15", cat:"out", title:"Watch people from a bench",  desc:"Observe the world going on around you. No judgment",           xp:35 },
+      { id:"o16", cat:"out", title:"Find something beautiful outside", desc:"A flower, a color, a shadow. One thing. That's all",          xp:30 },
+      { id:"o17", cat:"out", title:"Walk for 20 minutes",          desc:"No destination. Just keep moving forward",                      xp:60 },
+      { id:"o18", cat:"out", title:"Go somewhere you've never been", desc:"Doesn't have to be far. One new place",                       xp:70 },
+      { id:"o19", cat:"out", title:"Eat outside",                   desc:"Take your meal or snack outside. Fresh air makes food better",  xp:35 },
+      { id:"o20", cat:"out", title:"Watch the sunrise or sunset",   desc:"Five minutes. Just you and the sky",                           xp:45 },
+      { id:"o21", cat:"out", title:"Take photos of things you like", desc:"No filter needed. Just capture what catches your eye",        xp:40 },
+      { id:"o22", cat:"out", title:"Do something kind for a stranger", desc:"Hold a door, let someone go first, smile",                  xp:55 },
     ];
 
     const ALL_SOCIAL_POOL = [
@@ -135,6 +153,12 @@
       { id:"s10", cat:"social", title:"Share something you made",  desc:"A note, a photo, anything. Show someone a piece of you",     xp:55 },
       { id:"s11", cat:"social", title:"Join an online community",  desc:"A forum, a group. One message. You're not alone",            xp:50 },
       { id:"s12", cat:"social", title:"Spend time with a pet",     desc:"Yours or someone else's. Animals count as connection",       xp:25 },
+      { id:"s13", cat:"social", title:"Write a thank you message",  desc:"To someone who helped you, even a long time ago",              xp:40 },
+      { id:"s14", cat:"social", title:"Share a memory with someone", desc:"A photo, a story, a moment you both remember",                xp:35 },
+      { id:"s15", cat:"social", title:"Introduce yourself to someone new", desc:"Online or in person. One new connection",               xp:60 },
+      { id:"s16", cat:"social", title:"Tell someone you're proud of them", desc:"It costs nothing. It means everything",                 xp:30 },
+      { id:"s17", cat:"social", title:"Apologize for something small", desc:"Clear the air on something that's been sitting there",      xp:55 },
+      { id:"s18", cat:"social", title:"Watch something together",    desc:"A show, a video, anything shared with another person",        xp:30 },
     ];
 
     // Daily rotation — seeded by date so everyone gets the same quests each day
@@ -150,9 +174,9 @@
       return shuffled.slice(0, count);
     }
 
-    const HOME_QUESTS   = getDailyQuests(ALL_HOME_POOL,   5, 1);
-    const OUT_QUESTS    = getDailyQuests(ALL_OUT_POOL,    4, 2);
-    const SOCIAL_QUESTS = getDailyQuests(ALL_SOCIAL_POOL, 4, 3);
+    const HOME_QUESTS   = getDailyQuests(ALL_HOME_POOL,   6, 1);
+    const OUT_QUESTS    = getDailyQuests(ALL_OUT_POOL,    5, 2);
+    const SOCIAL_QUESTS = getDailyQuests(ALL_SOCIAL_POOL, 5, 3);
 
     const TOOLS = [
       { id:"breathe", title:"Box Breathing",        desc:"4-4-4-4 breathwork to settle the nervous system", duration:"4 min",  points:20 },
@@ -363,7 +387,7 @@
     }
 
     /* ── PROFILE ── */
-    function ProfileScreen({ user, setUser }) {
+    function ProfileScreen({ user, setUser, onSignOut }) {
       const [editing, setEditing] = useState(false);
       const [name, setName]       = useState(user.name);
       const [bio,  setBio]        = useState(user.bio  || "");
@@ -436,6 +460,17 @@
                 <Label style={{marginTop:4,letterSpacing:2}}>{s.label}</Label>
               </div>
             ))}
+          </div>
+          <div style={{margin:"8px 16px 20px"}}>
+            <button onClick={onSignOut} style={{
+              width:"100%",padding:"14px",borderRadius:18,cursor:"pointer",
+              background:"transparent",border:`1px solid ${G.mutedLo}`,
+              color:G.muted,fontFamily:"'Lato',sans-serif",fontSize:11,
+              fontWeight:700,letterSpacing:3,transition:"all 0.2s"}}
+              onMouseOver={e=>e.target.style.borderColor="#c47a5a"}
+              onMouseOut={e=>e.target.style.borderColor=G.mutedLo}>
+              SIGN OUT
+            </button>
           </div>
         </div>
       );
@@ -844,15 +879,37 @@
       const notify = msg => { setToast(msg); setTimeout(()=>setToast(null),3800); };
 
       useEffect(() => {
+        // Handle OAuth redirect — token comes back in URL hash
         supabase.auth.getSession().then(({ data: { session } }) => {
           setSession(session);
-          if (session) loadAllData(session.user.id);
-          else setLoading(false);
+          if (session) {
+            loadAllData(session.user.id);
+          } else {
+            // Try exchanging code from URL if coming back from OAuth
+            const hash = window.location.hash;
+            const params = new URLSearchParams(window.location.search);
+            if (hash.includes("access_token") || params.get("code")) {
+              supabase.auth.getSession().then(({ data: { session: s2 } }) => {
+                if (s2) { setSession(s2); loadAllData(s2.user.id); }
+                else setLoading(false);
+              });
+            } else {
+              setLoading(false);
+            }
+          }
         });
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
           setSession(session);
-          if (session) loadAllData(session.user.id);
-          else setLoading(false);
+          if (session) {
+            // Clean URL after OAuth redirect
+            if (window.location.hash.includes("access_token")) {
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            loadAllData(session.user.id);
+          } else {
+            setLoading(false);
+          }
         });
         return () => subscription.unsubscribe();
       }, []);
@@ -986,7 +1043,7 @@
             {tab==="quests"      && <QuestsScreen done={doneQuests} completeQuest={completeQuest} setUserAndSave={setUserAndSave} user={user} notify={notify} />}
             {tab==="motivations" && <MotivationsScreen motivations={motivations} addMotivation={addMotivation} deleteMotivation={deleteMotivation} />}
             {tab==="notebook"    && <NotebookScreen entries={entries} addEntry={addEntry} deleteEntry={deleteEntry} />}
-            {tab==="profile"     && <ProfileScreen user={user} setUser={setUserAndSave} />}
+            {tab==="profile"     && <ProfileScreen user={user} setUser={setUserAndSave} onSignOut={async()=>{ await supabase.auth.signOut(); setSession(null); setAnonIn(false); }} />}
           </div>
           <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",
             width:"100%",maxWidth:430,zIndex:100,
