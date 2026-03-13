@@ -57,7 +57,7 @@
         storageKey: "clearpath-auth",
         storage: window.localStorage,
         detectSessionInUrl: true,
-        flowType: "implicit",
+        autoRefreshToken: true,
       }
     });
 
@@ -861,26 +861,6 @@
       const notify = msg => { setToast(msg); setTimeout(()=>setToast(null),3800); };
 
       useEffect(() => {
-        // Handle OAuth redirect — token comes back in URL hash
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          setSession(session);
-          if (session) {
-            loadAllData(session.user.id);
-          } else {
-            // Try exchanging code from URL if coming back from OAuth
-            const hash = window.location.hash;
-            const params = new URLSearchParams(window.location.search);
-            if (hash.includes("access_token") || params.get("code")) {
-              supabase.auth.getSession().then(({ data: { session: s2 } }) => {
-                if (s2) { setSession(s2); loadAllData(s2.user.id); }
-                else setLoading(false);
-              });
-            } else {
-              setLoading(false);
-            }
-          }
-        });
-
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
           if (event === "SIGNED_OUT") {
             setSession(null);
@@ -890,15 +870,18 @@
             setLoading(false);
             return;
           }
-          if (session) {
-            setSession(session);
-            if (window.location.hash.includes("access_token")) {
-              window.history.replaceState({}, document.title, window.location.pathname);
+          if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
+            if (session) {
+              setSession(session);
+              // Clean messy URL after OAuth
+              if (window.location.hash && window.location.hash.length > 2) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+              }
+              loadAllData(session.user.id);
+            } else {
+              setSession(null);
+              setLoading(false);
             }
-            loadAllData(session.user.id);
-          } else {
-            setSession(null);
-            setLoading(false);
           }
         });
         return () => subscription.unsubscribe();
