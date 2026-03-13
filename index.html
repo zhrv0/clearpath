@@ -230,13 +230,10 @@
 
     /* ── LOGIN ── */
     function LoginScreen({ onLogin }) {
-      const [step, setStep]       = useState("welcome");
-      const [name, setName]       = useState("");
-      const [emailMode, setEmailMode] = useState(false);
-      const [email, setEmail]     = useState("");
+      const [step, setStep]   = useState("welcome");
+      const [name, setName]   = useState("");
       const [loading, setLoading] = useState(false);
-      const [msg, setMsg]         = useState("");
-      const [msgColor, setMsgColor] = useState(G.goldSoft);
+      const [msg, setMsg]     = useState("");
 
       // Auth is handled entirely by the App component's listener
 
@@ -246,19 +243,7 @@
           provider: "google",
           options: { redirectTo: window.location.origin }
         });
-        if (error) { setMsg(error.message); setMsgColor(G.red); setLoading(false); }
-      };
-
-      const handleEmail = async () => {
-        if (!email.includes("@")) { setMsg("Please enter a valid email"); setMsgColor(G.red); return; }
-        setLoading(true); setMsg("");
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-          options: { emailRedirectTo: window.location.origin }
-        });
-        setLoading(false);
-        if (error) { setMsg(error.message); setMsgColor(G.red); }
-        else { setMsg("Magic link sent! Check your email and click the link to sign in."); setMsgColor(G.sage); }
+        if (error) { setMsg(error.message); setLoading(false); }
       };
 
       if (step === "name") return (
@@ -300,9 +285,7 @@
           </div>
 
           <div style={{width:"100%",maxWidth:340,display:"flex",flexDirection:"column",gap:10}}>
-            {!emailMode && (
-              <>
-                <button className="auth-btn" onClick={handleGoogle} disabled={loading}>
+            <button className="auth-btn" onClick={handleGoogle} disabled={loading}>
                   <span style={{width:30,height:30,borderRadius:8,background:`${G.gold}18`,
                     border:`1px solid ${G.border}`,display:"flex",alignItems:"center",
                     justifyContent:"center",flexShrink:0}}>
@@ -316,14 +299,7 @@
                   {loading ? "Redirecting to Google..." : "Continue with Google"}
                 </button>
 
-                <button className="auth-btn" onClick={()=>{ setEmailMode(true); setMsg(""); }}>
-                  <span style={{width:30,height:30,borderRadius:8,background:`${G.gold}18`,
-                    border:`1px solid ${G.border}`,display:"flex",alignItems:"center",
-                    justifyContent:"center",flexShrink:0,color:G.gold,fontSize:13}}>@</span>
-                  Continue with Email
-                </button>
-
-                {msg && <p style={{color:msgColor,fontSize:12,fontFamily:"'Lato',sans-serif",
+                {msg && <p style={{color:G.red,fontSize:12,fontFamily:"'Lato',sans-serif",
                   lineHeight:1.5,textAlign:"center"}}>{msg}</p>}
 
                 <div style={{display:"flex",alignItems:"center",gap:12,margin:"4px 0"}}>
@@ -338,17 +314,6 @@
                   color:G.muted,fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:3}}>
                   CONTINUE ANONYMOUSLY
                 </button>
-              </>
-            )}
-
-            {emailMode && (
-              <div style={{display:"flex",flexDirection:"column",gap:12}}>
-                <button onClick={()=>{setEmailMode(false);setMsg("");}} style={{
-                  background:"transparent",border:"none",color:G.muted,cursor:"pointer",
-                  fontFamily:"'Lato',sans-serif",fontSize:11,letterSpacing:2,
-                  textAlign:"left",marginBottom:4}}>← BACK</button>
-                <Label style={{marginBottom:4}}>enter your email</Label>
-                <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
                   placeholder="you@example.com"
                   onKeyDown={e=>e.key==="Enter"&&handleEmail()}
                   style={{padding:"14px 18px",borderRadius:16,background:G.surface,
