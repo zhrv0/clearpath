@@ -3396,6 +3396,11 @@ function CheckInScreen() {
    file — see the setup note in the empty state if that function isn't wired
    up yet. Nothing here is saved between visits; refreshing starts fresh. */
 const CHAT_ENDPOINT = "/.netlify/functions/chat";
+
+// Last-resort safety net: if the backend can't be reached at all, this
+// still has to fire. It mirrors the same pattern used server-side.
+const TALK_CRISIS_PATTERN = /\b(kms|kill myself|killing myself|end my life|ending my life|end it all|want(ed)? to die|wanna die|better off dead|no reason to live|don'?t want to (be alive|live)|can'?t go on|cant go on|hurt myself|hurting myself|self[- ]harm|suicidal|suicide|take my (own )?life)\b/i;
+const TALK_CRISIS_BLOCK = "\n\nIf you're thinking about suicide or hurting yourself, please reach out right now: in the US, call or text 988 (Suicide & Crisis Lifeline, 24/7). In the UK & Ireland, call Samaritans on 116 123. Elsewhere, findahelpline.com lists crisis lines by country. If you're in immediate danger, please contact your local emergency number.";
 function TalkScreen() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -3436,9 +3441,11 @@ function TalkScreen() {
       }]);
     } catch (e) {
       setSetupNeeded(true);
+      const fallback = "I can't reach my AI service right now — this app's owner needs to finish a one-time setup to connect it. I'm still here on the page, just not able to reply for real yet.";
+      const crisis = TALK_CRISIS_PATTERN.test(text);
       setMessages(m => [...m, {
         role: "assistant",
-        content: "I can't reach my AI service right now — this app's owner needs to finish a one-time setup to connect it. I'm still here on the page, just not able to reply for real yet."
+        content: crisis ? fallback + TALK_CRISIS_BLOCK : fallback
       }]);
     } finally {
       setSending(false);
