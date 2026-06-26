@@ -79,6 +79,16 @@ exports.handler = async (event) => {
           contents,
           systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
           generationConfig: { maxOutputTokens: 350, temperature: 1.0 },
+          // Google's own filter (separate from our system prompt) defaults to
+          // blocking/truncating fairly aggressively, which misfires constantly
+          // on normal venting about hard feelings. This loosens it one notch
+          // for the categories that misfire here -- it does not disable safety,
+          // it stops it from being absurdly cautious on ordinary conversation.
+          safetySettings: [
+            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" },
+            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+          ],
         }),
       }
     );
@@ -92,8 +102,16 @@ exports.handler = async (event) => {
       };
     }
 
-    const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
-    const reply = parts.map(p => p.text || "").join("\n").trim();
+    const candidate = data.candidates && data.candidates[0];
+    const parts = (candidate && candidate.content && candidate.content.parts) || [];
+    let reply = parts.map(p => p.text || "").join("\n").trim();
+
+    if (!reply) {
+      // Gemini's filter blocked or fully cut the response (finishReason
+      // SAFETY/RECITATION/etc). Don't let this look like a dead connection --
+      // give something honest and let the conversation continue.
+      reply = "I got cut off there for a second -- can you say that again, maybe a bit differently?";
+    }
 
     return { statusCode: 200, body: JSON.stringify({ reply }) };
   } catch (e) {
