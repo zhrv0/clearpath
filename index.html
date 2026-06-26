@@ -691,6 +691,16 @@ const PROUD_MESSAGES = ["Proud of you for doing this.", "That's a real step. Wel
 function pickProud() {
   return PROUD_MESSAGES[Math.floor(Math.random() * PROUD_MESSAGES.length)];
 }
+
+// Same rotation idea as the quests — seeded by today's date, so it picks
+// one whisper for the whole day and never changes on refresh.
+const WHISPERS = ["Every sober day is sunlight breaking through the canopy — rare, golden, entirely yours.", "You don't have to see the whole staircase, just take the next step.", "Healing isn't linear, and that's allowed.", "The version of you that's still here is already a victory.", "Some days, survival is the whole achievement — and that's enough.", "You're not behind. You're exactly where your story needed you to be.", "Small, steady, and slow still counts as forward.", "Still trying says more about you than any one bad day can.", "Rest is not the opposite of progress.", "You've made it through 100% of your hardest days so far."];
+function getDailyWhisper() {
+  const today = new Date();
+  const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  return WHISPERS[seed % WHISPERS.length];
+}
+const DAILY_WHISPER = getDailyWhisper();
 const TOOLS = [{
   id: "breathe",
   title: "Box Breathing",
@@ -1782,7 +1792,16 @@ function HomeScreen({
     }
   }, "good to see you"), /*#__PURE__*/React.createElement(Title, {
     size: 32
-  }, user.name)), /*#__PURE__*/React.createElement(Card, {
+  }, user.name), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cormorant Garamond',serif",
+      fontStyle: "italic",
+      color: G.muted,
+      fontSize: 14,
+      marginTop: 8,
+      lineHeight: 1.6
+    }
+  }, "Everything will be okay in the end. If it's not okay, it's not the end.")), /*#__PURE__*/React.createElement(Card, {
     style: {
       background: `linear-gradient(145deg,${G.gold}10,${G.sage}06)`,
       borderColor: `${G.gold}30`,
@@ -1936,7 +1955,7 @@ function HomeScreen({
       color: G.sage,
       lineHeight: 1.8
     }
-  }, "\"Every sober day is sunlight breaking through the canopy — rare, golden, entirely yours.\"")));
+  }, "\"", DAILY_WHISPER, "\"")));
 }
 
 /* ── PROFILE ── */
@@ -3399,7 +3418,7 @@ const CHAT_ENDPOINT = "/.netlify/functions/chat";
 
 // Last-resort safety net: if the backend can't be reached at all, this
 // still has to fire. It mirrors the same pattern used server-side.
-const TALK_CRISIS_PATTERN = /\b(kms|kill myself|killing myself|end my life|ending my life|end it all|want(ed)? to die|wanna die|better off dead|no reason to live|don'?t want to (be alive|live)|can'?t go on|cant go on|hurt myself|hurting myself|self[- ]harm|suicidal|suicide|take my (own )?life)\b/i;
+const TALK_CRISIS_PATTERN = /\b(kms|kill myself|killing myself|end my life|ending my life|end it all|want(ed)? to die|wanna die|better off dead|no reason to live|don'?t want to (be alive|live)|can'?t go on|cant go on|hurt myself|hurting myself|harm myself|harming myself|self[- ]harm|suicidal|suicide|take my (own )?life|off myself|offing myself|unalive( myself)?|do myself in)\b/i;
 const TALK_CRISIS_BLOCK = "\n\nIf you're thinking about suicide or hurting yourself, please reach out right now: in the US, call or text 988 (Suicide & Crisis Lifeline, 24/7). In the UK & Ireland, call Samaritans on 116 123. Elsewhere, findahelpline.com lists crisis lines by country. If you're in immediate danger, please contact your local emergency number.";
 function TalkScreen() {
   const [messages, setMessages] = useState([]);
