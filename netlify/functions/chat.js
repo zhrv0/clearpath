@@ -23,11 +23,19 @@ How you talk:
 - Vary your phrasing across the conversation. Don't repeat the same comfort phrases turn after turn -- if you notice you're about to say something close to what you already said, say something different instead.
 
 Safety:
-- If someone says something like they don't want to do anything anymore, feel hopeless, or seem to be withdrawing, don't just validate and move on -- gently and directly ask whether they're having thoughts of hurting themselves, rather than assuming either way.
-- If someone expresses thoughts of suicide, self-harm, or being in real danger, respond with care and clearly include crisis resources in your reply (US: call/text 988; UK & Ireland: Samaritans 116 123; elsewhere: findahelpline.com), in addition to anything else you say.
+- If someone says they don't want to do anything anymore, feel hopeless, or seem to be withdrawing, don't just validate and move on -- gently and directly ask whether they're having thoughts of hurting themselves.
+- If someone expresses thoughts of suicide, self-harm, or wanting to die: stay present and warm, do NOT go cold, clinical, or scripted, and do not abandon the conversation. Ask directly and gently whether they're safe right now. Encourage them clearly to reach out to a real crisis line or a trusted person right now, in addition to talking with you -- you do not need to recite phone numbers yourself, the app adds those automatically right after your reply, every time, guaranteed. Keep being a real, caring presence: it's fine to talk about what's good in their life or reasons they've mentioned for staying, but only as genuine, specific engagement with what they've actually told you -- never as a generic "life is good" speech that brushes past how serious this is.
 - Never encourage substance use, self-harm, or anything that could hurt the person.
-- If someone seems to be in a mental health crisis, gently encourage them to reach out to a real person or professional -- don't just keep chatting as if everything is fine.
 - You can decline anything you'd normally decline, same as you would anywhere else.`;
+
+// Hard-coded safety net: if the latest message contains direct self-harm/suicide
+// language, the crisis block below is appended to the reply NO MATTER WHAT the
+// model said or whether its own response got cut off. This is deliberately not
+// left to the model alone -- the most important sentence in this whole app
+// can't be allowed to depend on a token limit or a content filter behaving.
+const CRISIS_PATTERN = /\b(kms|kys myself|kill myself|killing myself|end my life|ending my life|end it all|want(ed)? to die|wanna die|better off dead|no reason to live|don'?t want to (be alive|live)|can'?t go on|cant go on|hurt myself|hurting myself|self[- ]harm|suicidal|suicide|take my (own )?life)\b/i;
+
+const CRISIS_BLOCK = "\n\nIf you're thinking about suicide or hurting yourself, please reach out right now: in the US, call or text 988 (Suicide & Crisis Lifeline, 24/7). In the UK & Ireland, call Samaritans on 116 123. Elsewhere, findahelpline.com lists crisis lines by country. If you're in immediate danger, please contact your local emergency number.";
 
 const MODEL = "gemini-2.5-flash"; // generous free tier; swap to "gemini-2.5-flash-lite" for even higher free limits if needed
 
@@ -62,6 +70,9 @@ exports.handler = async (event) => {
   if (recent.length === 0) {
     return { statusCode: 400, body: JSON.stringify({ error: "No message content provided." }) };
   }
+
+  const lastUserMsg = [...recent].reverse().find(m => m.role === "user");
+  const isCrisis = lastUserMsg && CRISIS_PATTERN.test(lastUserMsg.content);
 
   // Gemini's format: role is "user" or "model" (not "assistant"), text goes in parts[].text
   const contents = recent.map(m => ({
@@ -110,11 +121,25 @@ exports.handler = async (event) => {
       // Gemini's filter blocked or fully cut the response (finishReason
       // SAFETY/RECITATION/etc). Don't let this look like a dead connection --
       // give something honest and let the conversation continue.
-      reply = "I got cut off there for a second -- can you say that again, maybe a bit differently?";
+      reply = isCrisis
+        ? "I'm really glad you told me that, and I don't want to just brush past it."
+        : "I got cut off there for a second -- can you say that again, maybe a bit differently?";
+    }
+
+    if (isCrisis && !reply.includes("988") && !reply.includes("findahelpline")) {
+      reply += CRISIS_BLOCK;
     }
 
     return { statusCode: 200, body: JSON.stringify({ reply }) };
   } catch (e) {
+    if (isCrisis) {
+      // Even a total network failure can't be allowed to mean someone in
+      // crisis gets nothing back at all.
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ reply: "I'm having trouble connecting right now, but please don't wait on me." + CRISIS_BLOCK }),
+      };
+    }
     return { statusCode: 500, body: JSON.stringify({ error: "Could not reach Gemini's API." }) };
   }
 };
