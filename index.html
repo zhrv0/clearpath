@@ -698,6 +698,12 @@ const TOOLS = [{
   duration: "4 min",
   points: 20
 }, {
+  id: "meditate",
+  title: "Guided Meditation",
+  desc: "Sit with your breath and let your mind settle",
+  duration: "5 min",
+  points: 30
+}, {
   id: "ground",
   title: "5-4-3-2-1 Grounding",
   desc: "Name what you sense. Anchor to the present",
@@ -728,6 +734,7 @@ const TOOLS = [{
   duration: "8 min",
   points: 25
 }];
+const MEDITATION_PROMPTS = ["Notice the weight of your body where you're sitting or lying.", "Let your breath move naturally — no need to control it.", "Notice any sound nearby. You don't have to name it, just hear it.", "If your mind wanders, that's normal. Just gently come back to your breath.", "Soften your shoulders. Unclench your jaw.", "There's nowhere else you need to be right now.", "Notice the next breath as it comes in, and as it leaves.", "You're allowed to just sit with whatever you're feeling.", "No need to fix or change anything right now. Just notice.", "A few more breaths, then we'll close gently."];
 
 /* ── TINY COMPONENTS ── */
 const Label = ({
@@ -1385,6 +1392,9 @@ function CalmScreen({
   const [phase, setPhase] = useState(0);
   const [count, setCount] = useState(4);
   const [cycles, setCycles] = useState(0);
+  const [meditating, setMeditating] = useState(false);
+  const [medSecondsLeft, setMedSecondsLeft] = useState(300);
+  const [medPromptIdx, setMedPromptIdx] = useState(0);
   useEffect(() => {
     if (!breathing) return;
     if (cycles >= 4) {
@@ -1411,12 +1421,39 @@ function CalmScreen({
     }, 1000);
     return () => clearInterval(t);
   }, [breathing, cycles]);
+  useEffect(() => {
+    if (!meditating) return;
+    if (medSecondsLeft <= 0) {
+      setMeditating(false);
+      if (!completedTools.includes("meditate")) {
+        completeTool("meditate");
+        setPoints(p => p + 30);
+        notify(`${pickProud()} +30 pts`);
+      }
+      return;
+    }
+    const t = setInterval(() => {
+      setMedSecondsLeft(s => s - 1);
+      // a new prompt roughly every 30 seconds
+      setMedPromptIdx(i => Math.min(MEDITATION_PROMPTS.length - 1, Math.floor((300 - medSecondsLeft + 1) / 30)));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [meditating, medSecondsLeft]);
+  const startMeditation = () => {
+    setMeditating(true);
+    setMedSecondsLeft(300);
+    setMedPromptIdx(0);
+  };
   const handleTool = t => {
     if (t.id === "breathe") {
       setBreathing(true);
       setPhase(0);
       setCount(4);
       setCycles(0);
+      return;
+    }
+    if (t.id === "meditate") {
+      startMeditation();
       return;
     }
     if (completedTools.includes(t.id)) {
@@ -1427,6 +1464,8 @@ function CalmScreen({
     setPoints(p => p + t.points);
     notify(`+${t.points} pts`);
   };
+  const medMin = String(Math.floor(medSecondsLeft / 60)).padStart(2, "0");
+  const medSec = String(medSecondsLeft % 60).padStart(2, "0");
   return /*#__PURE__*/React.createElement("div", {
     style: {
       paddingBottom: 20
@@ -1495,7 +1534,67 @@ function CalmScreen({
       fontSize: 11,
       letterSpacing: 3
     }
-  }, "CLOSE")), /*#__PURE__*/React.createElement("div", {
+  }, "CLOSE")), meditating && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      zIndex: 300,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 32,
+      padding: 32,
+      background: `radial-gradient(ellipse at center,${G.sage}1c,${G.bg})`
+    }
+  }, /*#__PURE__*/React.createElement(Label, {
+    style: {
+      letterSpacing: 8
+    }
+  }, "guided meditation"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 180,
+      height: 180,
+      borderRadius: "50%",
+      background: `radial-gradient(circle,${G.sage}33 0%,${G.sage}06 70%)`,
+      border: `1.5px solid ${G.sage}44`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      animation: "breathePulse 4s ease-in-out infinite"
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cormorant Garamond',serif",
+      fontSize: 36,
+      color: G.cream,
+      fontWeight: 600
+    }
+  }, medMin, ":", medSec)), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cormorant Garamond',serif",
+      fontStyle: "italic",
+      fontSize: 18,
+      color: G.text,
+      textAlign: "center",
+      maxWidth: 300,
+      lineHeight: 1.7,
+      minHeight: 64
+    }
+  }, MEDITATION_PROMPTS[medPromptIdx]), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setMeditating(false),
+    style: {
+      background: "transparent",
+      border: `1px solid ${G.mutedLo}`,
+      color: G.muted,
+      padding: "10px 28px",
+      borderRadius: 30,
+      cursor: "pointer",
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 11,
+      letterSpacing: 3
+    }
+  }, "END EARLY")), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "36px 24px 20px"
     }
@@ -1505,7 +1604,25 @@ function CalmScreen({
     }
   }, "settle the storm"), /*#__PURE__*/React.createElement(Title, {
     size: 30
-  }, "Calm Garden")), TOOLS.map(t => {
+  }, "Calm Garden")), /*#__PURE__*/React.createElement(Card, {
+    style: {
+      background: `${G.sage}0c`,
+      borderColor: `${G.sage}28`
+    }
+  }, /*#__PURE__*/React.createElement(Title, {
+    size: 16,
+    style: {
+      marginBottom: 8,
+      color: G.sageDark
+    }
+  }, "Why meditation helps with anxiety"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: G.textDim,
+      fontSize: 13,
+      fontFamily: "'Lato',sans-serif",
+      lineHeight: 1.7
+    }
+  }, "Anxiety keeps your body braced for a threat that usually isn't actually there anymore — it's a loop, not a fact. Sitting quietly and following your breath gives your nervous system a chance to register that you're safe right now, which is what actually lowers it, not fighting the anxious thought itself. Done regularly, it doesn't remove anxiety completely, but it builds your capacity to notice a spiral starting and step out of it sooner — which over time is what real progress looks like.")), TOOLS.map(t => {
     const done = completedTools.includes(t.id);
     return /*#__PURE__*/React.createElement(Card, {
       key: t.id,
@@ -3271,6 +3388,197 @@ function CheckInScreen() {
   }, "If you're ever in crisis: in the US, call or text 988. In the UK & Ireland, call Samaritans on 116 123. Elsewhere, findahelpline.com lists crisis lines by country."));
 }
 
+/* ── TALK ──
+   A small AI companion for venting to, not a therapist and not a replacement
+   for real people or real crisis care. Replies are short on purpose — like a
+   friend texting back, not an essay. The chat itself calls a tiny serverless
+   function (CHAT_ENDPOINT below) so the actual API key never sits in this
+   file — see the setup note in the empty state if that function isn't wired
+   up yet. Nothing here is saved between visits; refreshing starts fresh. */
+const CHAT_ENDPOINT = "/.netlify/functions/chat";
+function TalkScreen() {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [setupNeeded, setSetupNeeded] = useState(false);
+  const bottomRef = useRef();
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth"
+    });
+  }, [messages, sending]);
+  const send = async () => {
+    const text = input.trim();
+    if (!text || sending) return;
+    const next = [...messages, {
+      role: "user",
+      content: text
+    }];
+    setMessages(next);
+    setInput("");
+    setSending(true);
+    try {
+      const res = await fetch(CHAT_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({
+          messages: next.slice(-12)
+        })
+      });
+      if (!res.ok) throw new Error("bad response");
+      const data = await res.json();
+      if (!data.reply) throw new Error("no reply");
+      setMessages(m => [...m, {
+        role: "assistant",
+        content: data.reply
+      }]);
+    } catch (e) {
+      setSetupNeeded(true);
+      setMessages(m => [...m, {
+        role: "assistant",
+        content: "I can't reach my AI service right now — this app's owner needs to finish a one-time setup to connect it. I'm still here on the page, just not able to reply for real yet."
+      }]);
+    } finally {
+      setSending(false);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingBottom: 96,
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "36px 24px 12px"
+    }
+  }, /*#__PURE__*/React.createElement(Label, {
+    style: {
+      marginBottom: 8
+    }
+  }, "just talk"), /*#__PURE__*/React.createElement(Title, {
+    size: 28
+  }, "Companion"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: G.mutedLo,
+      fontSize: 11,
+      fontFamily: "'Lato',sans-serif",
+      lineHeight: 1.6,
+      marginTop: 8
+    }
+  }, "An AI, not a therapist or a person — for venting, not a crisis. Nothing here is saved.")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      padding: "0 16px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 10
+    }
+  }, messages.length === 0 && !setupNeeded && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "40px 24px"
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cormorant Garamond',serif",
+      fontStyle: "italic",
+      color: G.mutedLo,
+      fontSize: 17,
+      lineHeight: 1.8
+    }
+  }, "\"Say whatever's on your mind. I'm listening.\"")), messages.map((m, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      display: "flex",
+      justifyContent: m.role === "user" ? "flex-end" : "flex-start"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: "80%",
+      padding: "11px 16px",
+      borderRadius: 18,
+      background: m.role === "user" ? `${G.gold}20` : G.surface,
+      border: `1px solid ${m.role === "user" ? G.gold + "40" : G.border}`,
+      color: G.text,
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 14,
+      lineHeight: 1.55
+    }
+  }, m.content))), sending && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "flex-start"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "11px 16px",
+      borderRadius: 18,
+      background: G.surface,
+      border: `1px solid ${G.border}`,
+      color: G.mutedLo,
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 13
+    }
+  }, "···")), /*#__PURE__*/React.createElement("div", {
+    ref: bottomRef
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      bottom: 76,
+      left: "50%",
+      transform: "translateX(-50%)",
+      width: "100%",
+      maxWidth: 430,
+      padding: "0 16px",
+      zIndex: 90
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      background: G.bg,
+      padding: "8px 0"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: input,
+    onChange: e => setInput(e.target.value),
+    onKeyDown: e => {
+      if (e.key === "Enter") send();
+    },
+    placeholder: "Type something...",
+    style: {
+      flex: 1,
+      padding: "13px 16px",
+      borderRadius: 20,
+      background: G.surface,
+      border: `1px solid ${G.borderHi}`,
+      color: G.cream,
+      fontSize: 14,
+      outline: "none",
+      fontFamily: "'Lato',sans-serif"
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: send,
+    disabled: sending || !input.trim(),
+    style: {
+      width: 46,
+      height: 46,
+      borderRadius: "50%",
+      flexShrink: 0,
+      cursor: "pointer",
+      background: `linear-gradient(135deg,${G.gold},${G.goldSoft})`,
+      border: "none",
+      color: G.bg,
+      fontSize: 16,
+      opacity: sending || !input.trim() ? 0.5 : 1
+    }
+  }, "↑"))));
+}
+
 /* ── ROOT ── */
 function App() {
   const today = new Date().toISOString().split("T")[0];
@@ -3386,7 +3694,7 @@ function App() {
     setEntries([]);
     setTab("home");
   };
-  const TABS = [{
+  const LEFT_TABS = [{
     id: "home",
     label: "Home"
   }, {
@@ -3398,7 +3706,8 @@ function App() {
   }, {
     id: "checkin",
     label: "Mind"
-  }, {
+  }];
+  const RIGHT_TABS = [{
     id: "motivations",
     label: "Why"
   }, {
@@ -3422,6 +3731,40 @@ function App() {
       });
     }
   });
+  const renderTabBtn = t => /*#__PURE__*/React.createElement("button", {
+    key: t.id,
+    onClick: () => setTab(t.id),
+    className: "tab-btn",
+    style: {
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 5,
+      padding: "6px 0",
+      background: "transparent",
+      border: "none",
+      cursor: "pointer",
+      transition: "color 0.2s",
+      color: tab === t.id ? G.gold : G.mutedLo
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 4,
+      height: 4,
+      borderRadius: "50%",
+      marginBottom: 2,
+      background: tab === t.id ? G.gold : "transparent",
+      transition: "background 0.2s"
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 7,
+      letterSpacing: 1,
+      fontWeight: tab === t.id ? 700 : 400
+    }
+  }, t.label.toUpperCase()));
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
@@ -3469,7 +3812,7 @@ function App() {
     setUserAndSave: setUserAndSave,
     user: user,
     notify: notify
-  }), tab === "checkin" && /*#__PURE__*/React.createElement(CheckInScreen, null), tab === "motivations" && /*#__PURE__*/React.createElement(MotivationsScreen, {
+  }), tab === "checkin" && /*#__PURE__*/React.createElement(CheckInScreen, null), tab === "talk" && /*#__PURE__*/React.createElement(TalkScreen, null), tab === "motivations" && /*#__PURE__*/React.createElement(MotivationsScreen, {
     motivations: motivations,
     addMotivation: addMotivation,
     deleteMotivation: deleteMotivation
@@ -3495,42 +3838,37 @@ function App() {
       background: `linear-gradient(0deg,${G.bg}fa 70%,transparent)`,
       borderTop: `1px solid ${G.border}`,
       display: "flex",
+      alignItems: "flex-end",
       padding: "10px 0 16px"
     }
-  }, TABS.map(t => /*#__PURE__*/React.createElement("button", {
-    key: t.id,
-    onClick: () => setTab(t.id),
-    className: "tab-btn",
+  }, LEFT_TABS.map(renderTabBtn), /*#__PURE__*/React.createElement("div", {
     style: {
-      flex: 1,
+      flex: "0 0 64px",
       display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: 5,
-      padding: "6px 0",
-      background: "transparent",
-      border: "none",
-      cursor: "pointer",
-      transition: "color 0.2s",
-      color: tab === t.id ? G.gold : G.mutedLo
+      justifyContent: "center"
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setTab("talk"),
     style: {
-      width: 4,
-      height: 4,
+      width: 54,
+      height: 54,
       borderRadius: "50%",
-      marginBottom: 2,
-      background: tab === t.id ? G.gold : "transparent",
-      transition: "background 0.2s"
+      cursor: "pointer",
+      border: "none",
+      marginTop: -30,
+      flexShrink: 0,
+      background: tab === "talk" ? `linear-gradient(135deg,${G.gold},${G.goldSoft})` : `linear-gradient(135deg,${G.gold}cc,${G.sage}cc)`,
+      boxShadow: `0 6px 20px ${G.gold}40`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      border: `2px solid ${G.bg}`
     }
-  }), /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontFamily: "'Lato',sans-serif",
-      fontSize: 7,
-      letterSpacing: 1,
-      fontWeight: tab === t.id ? 700 : 400
+      fontSize: 22
     }
-  }, t.label.toUpperCase())))));
+  }, "💬"))), RIGHT_TABS.map(renderTabBtn)));
 }
 ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));</script>
 </body>
