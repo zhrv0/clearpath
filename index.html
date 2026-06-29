@@ -16,11 +16,11 @@
     /* Default theme values — overwritten instantly by JS on load/switch, kept here so
        there is never a flash of unstyled content before the script runs. */
     :root {
-      --bg:#131210; --surface:rgba(230,225,210,0.05);
-      --border:rgba(196,105,63,0.16); --borderhi:rgba(196,105,63,0.4);
-      --gold:#c2693f; --goldsoft:#b8784f; --sage:#8aa66c; --sagedark:#5f7a45;
-      --cream:#ece3d2; --muted:#6b5f4d; --mutedlo:#332c22;
-      --text:#ddd0bb; --textdim:#968a72; --red:#c2576a;
+      --bg:#1b1712; --surface:rgba(230,210,180,0.08);
+      --border:rgba(214,100,50,0.28); --borderhi:rgba(214,100,50,0.55);
+      --gold:#d9703f; --goldsoft:#c46a3a; --sage:#8fc26a; --sagedark:#5f8f44;
+      --cream:#f3e6cc; --muted:#a8916f; --mutedlo:#7a6448;
+      --text:#ecdcb8; --textdim:#c2ab83; --red:#d9604a;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; background: var(--bg); overflow-x: hidden; transition: background 0.4s ease; }
@@ -63,7 +63,11 @@ const STORE = {
   quests: "clearpath-quests-done",
   tools: "clearpath-tools-done",
   motivations: "clearpath-motivations",
-  entries: "clearpath-entries"
+  entries: "clearpath-entries",
+  moods: "clearpath-moods",
+  checkins: "clearpath-checkins",
+  privateEntries: "clearpath-private-entries",
+  privateCode: "clearpath-private-code"
 };
 function loadLocal(key, fallback) {
   try {
@@ -85,23 +89,25 @@ function saveLocal(key, value) {
 const THEMES = {
   clay: {
     label: "Clay",
-    bg: "#131210",
-    surface: "rgba(230,225,210,0.05)",
-    border: "rgba(196,105,63,0.16)",
-    borderHi: "rgba(196,105,63,0.4)",
-    gold: "#c2693f",
-    goldSoft: "#b8784f",
-    sage: "#8aa66c",
-    sageDark: "#5f7a45",
-    cream: "#ece3d2",
-    muted: "#6b5f4d",
-    mutedLo: "#332c22",
-    text: "#ddd0bb",
-    textDim: "#968a72",
-    red: "#c2576a"
+    desc: "Warm & grounded",
+    bg: "#1b1712",
+    surface: "rgba(230,210,180,0.08)",
+    border: "rgba(214,100,50,0.28)",
+    borderHi: "rgba(214,100,50,0.55)",
+    gold: "#d9703f",
+    goldSoft: "#c46a3a",
+    sage: "#8fc26a",
+    sageDark: "#5f8f44",
+    cream: "#f3e6cc",
+    muted: "#a8916f",
+    mutedLo: "#7a6448",
+    text: "#ecdcb8",
+    textDim: "#c2ab83",
+    red: "#d9604a"
   },
   moss: {
     label: "Moss",
+    desc: "Earthy & calm",
     bg: "#0f130d",
     surface: "rgba(220,235,200,0.045)",
     border: "rgba(140,180,100,0.16)",
@@ -119,6 +125,7 @@ const THEMES = {
   },
   dusk: {
     label: "Dusk",
+    desc: "Soft & dreamy",
     bg: "#14101a",
     surface: "rgba(225,210,240,0.05)",
     border: "rgba(170,140,210,0.18)",
@@ -136,6 +143,7 @@ const THEMES = {
   },
   midnight: {
     label: "Midnight",
+    desc: "Cool & clear",
     bg: "#0a0e12",
     surface: "rgba(210,225,235,0.045)",
     border: "rgba(120,170,200,0.16)",
@@ -153,20 +161,21 @@ const THEMES = {
   },
   paper: {
     label: "Paper",
+    desc: "Bright & airy",
     bg: "#f3eee3",
-    surface: "rgba(40,30,15,0.04)",
-    border: "rgba(120,80,40,0.18)",
-    borderHi: "rgba(120,80,40,0.4)",
+    surface: "rgba(40,30,15,0.05)",
+    border: "rgba(120,80,40,0.22)",
+    borderHi: "rgba(120,80,40,0.45)",
     gold: "#a3502e",
     goldSoft: "#8f4527",
     sage: "#5c7a4a",
     sageDark: "#3f5933",
-    cream: "#2a2118",
-    muted: "#8c7c64",
-    mutedLo: "#dccdb6",
-    text: "#3a3026",
-    textDim: "#73654f",
-    red: "#b23f33"
+    cream: "#241c14",
+    muted: "#6b5a42",
+    mutedLo: "#9c8568",
+    text: "#2e251c",
+    textDim: "#5e4f3c",
+    red: "#a8392c"
   }
 };
 const THEME_ORDER = ["clay", "moss", "dusk", "midnight", "paper"];
@@ -211,40 +220,6 @@ function applyTheme(key, persist = true) {
 })();
 
 /* ── DATA ── */
-const RANKS = [{
-  name: "Seedling",
-  min: 0,
-  color: G.sage
-}, {
-  name: "Sprout",
-  min: 100,
-  color: "#7fb96a"
-}, {
-  name: "Sapling",
-  min: 300,
-  color: "#6aaa5a"
-}, {
-  name: "Blossom",
-  min: 700,
-  color: "#d4956a"
-}, {
-  name: "Oak",
-  min: 1500,
-  color: "#b8860b"
-}, {
-  name: "Guardian",
-  min: 3000,
-  color: "#c9954a"
-}, {
-  name: "Luminary",
-  min: 6000,
-  color: "#d4a831"
-}, {
-  name: "Phoenix",
-  min: 10000,
-  color: "#e08c42"
-}];
-
 // ── FULL QUEST POOL (rotates daily, 5 per category shown each day = 15/day) ──
 const ALL_HOME_POOL = [{
   id: "h1",
@@ -949,11 +924,370 @@ function LoginScreen({
 }
 
 /* ── NOTEBOOK ── */
+function PrivateNotebook() {
+  const [code, setCode] = useState(() => loadLocal(STORE.privateCode, null));
+  const [unlocked, setUnlocked] = useState(false);
+  const [input, setInput] = useState("");
+  const [err, setErr] = useState("");
+  const [pEntries, setPEntries] = useState(() => loadLocal(STORE.privateEntries, []));
+  const [open, setOpen] = useState(null);
+  const [text, setText] = useState("");
+  const [title, setTitle] = useState("");
+  const setCodeNow = () => {
+    if (input.trim().length < 4) {
+      setErr("Use at least 4 characters.");
+      return;
+    }
+    saveLocal(STORE.privateCode, input.trim());
+    setCode(input.trim());
+    setUnlocked(true);
+    setInput("");
+    setErr("");
+  };
+  const tryUnlock = () => {
+    if (input.trim() === code) {
+      setUnlocked(true);
+      setInput("");
+      setErr("");
+    } else {
+      setErr("That code doesn't match.");
+      setInput("");
+    }
+  };
+  const forgetCode = () => {
+    if (!window.confirm("This deletes your private code AND every entry inside this private notebook — permanently, with no way to recover them. Continue?")) return;
+    try {
+      localStorage.removeItem(STORE.privateCode);
+      localStorage.removeItem(STORE.privateEntries);
+    } catch (e) {}
+    setCode(null);
+    setPEntries([]);
+    setUnlocked(false);
+    setInput("");
+  };
+  const addPrivate = () => {
+    if (!text.trim()) return;
+    const t = title.trim() || new Date().toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long"
+    });
+    const record = {
+      id: Date.now(),
+      title: t,
+      body: text,
+      date: new Date().toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      })
+    };
+    const next = [record, ...pEntries];
+    setPEntries(next);
+    saveLocal(STORE.privateEntries, next);
+    setOpen(null);
+    setText("");
+    setTitle("");
+  };
+  const deletePrivate = id => {
+    if (!window.confirm("Are you sure you want to delete this? This action is irreversible.")) return;
+    const next = pEntries.filter(x => x.id !== id);
+    setPEntries(next);
+    saveLocal(STORE.privateEntries, next);
+  };
+  if (!code || !unlocked) {
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "60px 28px",
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 54,
+        height: 54,
+        borderRadius: "50%",
+        margin: "0 auto 20px",
+        background: `${G.gold}18`,
+        border: `1px solid ${G.borderHi}`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 22
+      }
+    }, "🔒"), /*#__PURE__*/React.createElement(Title, {
+      size: 20,
+      style: {
+        marginBottom: 10
+      }
+    }, code ? "Enter your code" : "Set a private code"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: G.mutedLo,
+        fontSize: 12,
+        fontFamily: "'Lato',sans-serif",
+        lineHeight: 1.6,
+        marginBottom: 22
+      }
+    }, code ? "Only you know this code." : "This protects this space — pick something only you'll remember. There's no recovery if you forget it."), /*#__PURE__*/React.createElement("input", {
+      type: "password",
+      value: input,
+      onChange: e => setInput(e.target.value),
+      placeholder: code ? "your code" : "create a code",
+      onKeyDown: e => {
+        if (e.key === "Enter") code ? tryUnlock() : setCodeNow();
+      },
+      style: {
+        width: "100%",
+        maxWidth: 260,
+        padding: "13px 18px",
+        borderRadius: 16,
+        background: G.surface,
+        border: `1px solid ${G.borderHi}`,
+        color: G.cream,
+        fontSize: 15,
+        outline: "none",
+        textAlign: "center",
+        marginBottom: 12,
+        letterSpacing: 3
+      }
+    }), err && /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: G.red,
+        fontSize: 12,
+        fontFamily: "'Lato',sans-serif",
+        marginBottom: 12
+      }
+    }, err), /*#__PURE__*/React.createElement("div", {
+      style: {
+        maxWidth: 260,
+        margin: "0 auto"
+      }
+    }, /*#__PURE__*/React.createElement(Btn, {
+      onClick: code ? tryUnlock : setCodeNow,
+      color: G.gold
+    }, code ? "UNLOCK" : "SET CODE")), code && /*#__PURE__*/React.createElement("button", {
+      onClick: forgetCode,
+      style: {
+        marginTop: 16,
+        background: "transparent",
+        border: "none",
+        color: G.mutedLo,
+        cursor: "pointer",
+        fontFamily: "'Lato',sans-serif",
+        fontSize: 10,
+        textDecoration: "underline"
+      }
+    }, "forgot your code?"));
+  }
+  if (open !== null) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      minHeight: "100vh",
+      background: G.bg,
+      padding: "0 0 100px",
+      display: "flex",
+      flexDirection: "column"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "30px 24px 20px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-start"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      paddingRight: 16
+    }
+  }, /*#__PURE__*/React.createElement(Label, {
+    style: {
+      marginBottom: 8
+    }
+  }, "private · new entry"), /*#__PURE__*/React.createElement("input", {
+    value: title,
+    onChange: e => setTitle(e.target.value),
+    placeholder: "give this entry a title...",
+    style: {
+      background: "transparent",
+      border: "none",
+      outline: "none",
+      fontFamily: "'Cormorant Garamond',serif",
+      fontSize: 26,
+      color: G.cream,
+      width: "100%",
+      padding: 0
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      marginTop: 8,
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: addPrivate,
+    style: {
+      background: `${G.gold}20`,
+      border: `1px solid ${G.gold}44`,
+      color: G.gold,
+      padding: "8px 16px",
+      borderRadius: 12,
+      cursor: "pointer",
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 10,
+      fontWeight: 700,
+      letterSpacing: 2
+    }
+  }, "SAVE"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setOpen(null);
+      setText("");
+      setTitle("");
+    },
+    style: {
+      background: "transparent",
+      border: `1px solid ${G.mutedLo}`,
+      color: G.muted,
+      padding: "8px 14px",
+      borderRadius: 12,
+      cursor: "pointer",
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 10,
+      letterSpacing: 1
+    }
+  }, "BACK"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      padding: "0 24px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      height: 1,
+      background: G.border,
+      marginBottom: 20
+    }
+  }), /*#__PURE__*/React.createElement("textarea", {
+    value: text,
+    onChange: e => setText(e.target.value),
+    placeholder: "Only visible behind your code. Write whatever you need to.",
+    style: {
+      width: "100%",
+      minHeight: "60vh",
+      background: "transparent",
+      border: "none",
+      outline: "none",
+      resize: "none",
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 15,
+      color: G.text,
+      lineHeight: 1.9
+    }
+  })));
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "20px 16px 16px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement(Label, null, "🔒 unlocked for this visit"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setOpen("new");
+      setText("");
+      setTitle("");
+    },
+    style: {
+      background: `linear-gradient(135deg,${G.gold}22,${G.gold}0a)`,
+      border: `1px solid ${G.gold}44`,
+      color: G.gold,
+      padding: "10px 18px",
+      borderRadius: 14,
+      cursor: "pointer",
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 10,
+      fontWeight: 700,
+      letterSpacing: 2
+    }
+  }, "+ NEW")), pEntries.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "40px 32px"
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cormorant Garamond',serif",
+      fontStyle: "italic",
+      color: G.mutedLo,
+      fontSize: 16,
+      lineHeight: 1.8
+    }
+  }, "Nothing here yet. This space is just for you.")), pEntries.map(e => /*#__PURE__*/React.createElement(Card, {
+    key: e.id,
+    onClick: () => {
+      setOpen(e.id);
+      setText(e.body);
+      setTitle(e.title);
+    },
+    style: {
+      position: "relative"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: ev => {
+      ev.stopPropagation();
+      deletePrivate(e.id);
+    },
+    style: {
+      position: "absolute",
+      top: 10,
+      right: 10,
+      width: 30,
+      height: 30,
+      borderRadius: "50%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "rgba(10,8,6,0.6)",
+      backdropFilter: "blur(3px)",
+      border: "1px solid rgba(255,255,255,0.18)",
+      color: "#fff",
+      cursor: "pointer",
+      fontSize: 16,
+      lineHeight: 1,
+      padding: 0,
+      zIndex: 2
+    }
+  }, "×"), /*#__PURE__*/React.createElement(Label, {
+    style: {
+      marginBottom: 8
+    }
+  }, e.date), /*#__PURE__*/React.createElement(Title, {
+    size: 18,
+    style: {
+      marginBottom: 8,
+      paddingRight: 24
+    }
+  }, e.title), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: G.textDim,
+      fontSize: 13,
+      fontFamily: "'Lato',sans-serif",
+      lineHeight: 1.6,
+      overflow: "hidden",
+      display: "-webkit-box",
+      WebkitLineClamp: 3,
+      WebkitBoxOrient: "vertical"
+    }
+  }, e.body))));
+}
 function NotebookScreen({
   entries,
   addEntry,
   deleteEntry
 }) {
+  const [section, setSection] = useState("journal"); // "journal" | "private"
   const [open, setOpen] = useState(null);
   const [text, setText] = useState("");
   const [title, setTitle] = useState("");
@@ -977,6 +1311,50 @@ function NotebookScreen({
     setText("");
     setTitle("");
   };
+  const confirmDelete = id => {
+    if (!window.confirm("Are you sure you want to delete this? This action is irreversible.")) return;
+    deleteEntry(id);
+  };
+  if (section === "private") return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "36px 24px 12px",
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSection("journal"),
+    style: {
+      flex: 1,
+      padding: "10px",
+      borderRadius: 14,
+      cursor: "pointer",
+      background: "transparent",
+      border: `1px solid ${G.mutedLo}`,
+      color: G.muted,
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: 1
+    }
+  }, "JOURNAL"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      flex: 1,
+      padding: "10px",
+      borderRadius: 14,
+      cursor: "pointer",
+      background: `${G.gold}22`,
+      border: `1px solid ${G.gold}`,
+      color: G.gold,
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: 1
+    }
+  }, "PRIVATE")), /*#__PURE__*/React.createElement(PrivateNotebook, null));
   if (open !== null) return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
@@ -1117,7 +1495,42 @@ function NotebookScreen({
       fontWeight: 700,
       letterSpacing: 2
     }
-  }, "+ NEW")), entries.length === 0 && /*#__PURE__*/React.createElement("div", {
+  }, "+ NEW")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 16px 16px",
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      flex: 1,
+      padding: "10px",
+      borderRadius: 14,
+      cursor: "pointer",
+      background: `${G.gold}22`,
+      border: `1px solid ${G.gold}`,
+      color: G.gold,
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: 1
+    }
+  }, "JOURNAL"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSection("private"),
+    style: {
+      flex: 1,
+      padding: "10px",
+      borderRadius: 14,
+      cursor: "pointer",
+      background: "transparent",
+      border: `1px solid ${G.mutedLo}`,
+      color: G.muted,
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: 1
+    }
+  }, "🔒 PRIVATE")), entries.length === 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: "50px 32px"
@@ -1162,18 +1575,27 @@ function NotebookScreen({
   }, /*#__PURE__*/React.createElement("button", {
     onClick: ev => {
       ev.stopPropagation();
-      setEntries(es => es.filter(x => x.id !== e.id));
+      confirmDelete(e.id);
     },
     style: {
       position: "absolute",
-      top: 16,
-      right: 16,
-      background: "transparent",
-      border: "none",
-      color: G.mutedLo,
+      top: 10,
+      right: 10,
+      width: 30,
+      height: 30,
+      borderRadius: "50%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "rgba(10,8,6,0.6)",
+      backdropFilter: "blur(3px)",
+      border: "1px solid rgba(255,255,255,0.18)",
+      color: "#fff",
       cursor: "pointer",
       fontSize: 16,
-      padding: 4
+      lineHeight: 1,
+      padding: 0,
+      zIndex: 2
     }
   }, "×"), /*#__PURE__*/React.createElement(Label, {
     style: {
@@ -1678,16 +2100,68 @@ function CalmScreen({
 }
 
 /* ── HOME ── */
+const MOOD_SCALE = [{
+  v: 1,
+  label: "Rough",
+  color: "red"
+}, {
+  v: 2,
+  label: "Hard",
+  color: "goldSoft"
+}, {
+  v: 3,
+  label: "Okay",
+  color: "muted"
+}, {
+  v: 4,
+  label: "Good",
+  color: "sage"
+}, {
+  v: 5,
+  label: "Great",
+  color: "gold"
+}];
+
+// A small soft gradient orb standing in for an emoji — size/glow scale with
+// how "big" the mood is, so it reads as an intensity, not just a color swap.
+function MoodOrb({
+  color,
+  v,
+  size = 22,
+  selected
+}) {
+  const scale = 0.74 + v / 5 * 0.26;
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: "inline-block",
+      width: size,
+      height: size
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: "block",
+      width: "100%",
+      height: "100%",
+      borderRadius: "50%",
+      transform: `scale(${scale})`,
+      background: `radial-gradient(circle at 35% 30%, ${color}, ${color}99 55%, ${color}35 100%)`,
+      boxShadow: selected ? `0 2px 12px ${color}66` : `0 1px 4px ${color}22`
+    }
+  }));
+}
 function HomeScreen({
   user,
   setUser,
   notify,
-  setTab
+  setTab,
+  moodLog,
+  logMood,
+  logCheckin
 }) {
   const [modal, setModal] = useState(false);
-  const rank = RANKS.reduce((a, r) => user.points >= r.min ? r : a, RANKS[0]);
-  const nextRank = RANKS.find(r => user.points < r.min);
-  const prog = nextRank ? Math.round((user.points - rank.min) / (nextRank.min - rank.min) * 100) : 100;
+  const [relapseModal, setRelapseModal] = useState(false);
+  const todayIso = new Date().toISOString().split("T")[0];
+  const todaysMood = moodLog.find(m => m.date === todayIso);
   const checkIn = () => {
     const today = new Date().toDateString();
     if (user.lastCheckIn === today) {
@@ -1703,8 +2177,19 @@ function HomeScreen({
       soberDays: u.soberDays + 1,
       lastCheckIn: today
     }));
+    logCheckin();
     setModal(false);
     notify(`+${earned} pts — day ${user.streak + 1}`);
+  };
+  const confirmRelapse = () => {
+    setUser(u => ({
+      ...u,
+      streak: 0,
+      soberDays: 0,
+      lastCheckIn: null
+    }));
+    setRelapseModal(false);
+    notify("Day one. We're starting again, together.");
   };
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1771,7 +2256,76 @@ function HomeScreen({
       fontStyle: "italic",
       fontSize: 14
     }
-  }, "not today"))), /*#__PURE__*/React.createElement("div", {
+  }, "not today"))), relapseModal && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      zIndex: 200,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24,
+      background: `${G.bg}f0`,
+      backdropFilter: "blur(10px)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: `linear-gradient(145deg,${G.sage}12,${G.bg})`,
+      border: `1px solid ${G.sage}40`,
+      borderRadius: 28,
+      padding: "40px 30px",
+      maxWidth: 360,
+      width: "100%",
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement(Label, {
+    style: {
+      marginBottom: 14,
+      letterSpacing: 6,
+      color: G.sageDark
+    }
+  }, "be honest, be gentle"), /*#__PURE__*/React.createElement(Title, {
+    size: 24,
+    style: {
+      marginBottom: 16
+    }
+  }, "Today is a new day one"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: G.text,
+      fontSize: 14,
+      lineHeight: 1.8,
+      marginBottom: 18,
+      fontFamily: "'Lato',sans-serif",
+      textAlign: "left"
+    }
+  }, "A relapse doesn't erase the days you fought for, what you learned, or who you're becoming. Most people who recover have more than one start — that's not failure, that's just what the road actually looks like."), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: G.textDim,
+      fontSize: 13,
+      lineHeight: 1.8,
+      marginBottom: 28,
+      fontFamily: "'Lato',sans-serif",
+      textAlign: "left",
+      fontStyle: "italic"
+    }
+  }, "Your streak resets. You don't. The fact that you're being honest about this, right now, already says something real about who you are."), /*#__PURE__*/React.createElement(Btn, {
+    onClick: confirmRelapse,
+    color: G.sage,
+    style: {
+      marginBottom: 12
+    }
+  }, "BEGIN AGAIN"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setRelapseModal(false),
+    style: {
+      background: "transparent",
+      border: "none",
+      color: G.mutedLo,
+      cursor: "pointer",
+      fontFamily: "'Cormorant Garamond',serif",
+      fontStyle: "italic",
+      fontSize: 14
+    }
+  }, "not now"))), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "40px 24px 20px",
       position: "relative"
@@ -1852,45 +2406,57 @@ function HomeScreen({
   }, s.value)))), /*#__PURE__*/React.createElement(Btn, {
     onClick: () => setModal(true),
     color: G.gold
-  }, "DAILY CHECK-IN  +", 50 + user.streak * 10, " pts")), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement("div", {
+  }, "DAILY CHECK-IN  +", 50 + user.streak * 10, " pts")), /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "flex",
-      justifyContent: "space-between",
+      margin: "0 16px 14px"
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    onClick: () => setRelapseModal(true),
+    color: G.red
+  }, "I RELAPSED — RESET MY STREAK")), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Label, {
+    style: {
       marginBottom: 12
     }
-  }, /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontFamily: "'Cormorant Garamond',serif",
-      fontSize: 16,
-      color: G.goldSoft
-    }
-  }, "Rank — ", rank.name), nextRank && /*#__PURE__*/React.createElement(Label, null, nextRank.name, " next")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "rgba(0,0,0,0.4)",
-      borderRadius: 8,
-      height: 4,
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      height: "100%",
-      width: `${prog}%`,
-      borderRadius: 8,
-      transition: "width 0.8s ease",
-      background: `linear-gradient(90deg,${rank.color}88,${rank.color})`,
-      boxShadow: `0 0 8px ${rank.color}44`
-    }
-  })), /*#__PURE__*/React.createElement("div", {
+  }, "how are you feeling today?"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      justifyContent: "space-between",
-      marginTop: 8
+      justifyContent: "space-between"
     }
-  }, /*#__PURE__*/React.createElement(Label, {
-    style: {
-      color: rank.color
-    }
-  }, rank.name), /*#__PURE__*/React.createElement(Label, null, prog, "%"))), /*#__PURE__*/React.createElement("div", {
+  }, MOOD_SCALE.map(m => {
+    const sel = todaysMood?.mood === m.v;
+    return /*#__PURE__*/React.createElement("button", {
+      key: m.v,
+      onClick: () => {
+        logMood(m.v);
+        notify(`Logged: ${m.label}`);
+      },
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 6,
+        background: sel ? `${G[m.color]}22` : "transparent",
+        border: `1px solid ${sel ? G[m.color] : "transparent"}`,
+        borderRadius: 16,
+        padding: "8px 10px",
+        cursor: "pointer",
+        transition: "all 0.15s"
+      }
+    }, /*#__PURE__*/React.createElement(MoodOrb, {
+      color: G[m.color],
+      v: m.v,
+      size: 26,
+      selected: sel
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "'Lato',sans-serif",
+        fontSize: 9,
+        letterSpacing: 0.5,
+        color: sel ? G[m.color] : G.mutedLo,
+        fontWeight: sel ? 700 : 400
+      }
+    }, m.label.toUpperCase()));
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -1964,10 +2530,12 @@ function ProfileScreen({
   setUser,
   onReset,
   themeKey,
-  changeTheme
+  changeTheme,
+  moodLog,
+  checkinLog
 }) {
   const [editing, setEditing] = useState(false);
-  const [view, setView] = useState("main"); // "main" | "themes"
+  const [view, setView] = useState("main"); // "main" | "themes" | "track"
   const [name, setName] = useState(user.name);
   const [bio, setBio] = useState(user.bio || "");
   const [why, setWhy] = useState(user.why || "");
@@ -1984,6 +2552,11 @@ function ProfileScreen({
   if (view === "themes") return /*#__PURE__*/React.createElement(ThemesScreen, {
     themeKey: themeKey,
     changeTheme: changeTheme,
+    onBack: () => setView("main")
+  });
+  if (view === "track") return /*#__PURE__*/React.createElement(TrackScreen, {
+    moodLog: moodLog,
+    checkinLog: checkinLog,
     onBack: () => setView("main")
   });
   return /*#__PURE__*/React.createElement("div", {
@@ -2189,6 +2762,94 @@ function ProfileScreen({
       marginLeft: 2
     }
   }, "settings"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setView("track"),
+    className: "card-hover",
+    style: {
+      width: "100%",
+      padding: "16px 18px",
+      borderRadius: 18,
+      cursor: "pointer",
+      marginBottom: 10,
+      background: G.surface,
+      border: `1px solid ${G.border}`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      transition: "all 0.2s"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 34,
+      height: 34,
+      borderRadius: 11,
+      flexShrink: 0,
+      background: `linear-gradient(135deg,${G.sage}28,${G.gold}1f)`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "18",
+    height: "18",
+    viewBox: "0 0 24 24",
+    fill: "none"
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "3",
+    y: "5",
+    width: "18",
+    height: "16",
+    rx: "3.5",
+    stroke: G.sage,
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M3 9.5h18",
+    stroke: G.sage,
+    strokeWidth: "1.6"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M8 3v4M16 3v4",
+    stroke: G.gold,
+    strokeWidth: "1.6",
+    strokeLinecap: "round"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "8",
+    cy: "13.5",
+    r: "1.3",
+    fill: G.gold
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "13.5",
+    r: "1.3",
+    fill: G.sage
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "16",
+    cy: "13.5",
+    r: "1.3",
+    fill: G.gold
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "8",
+    cy: "17.5",
+    r: "1.3",
+    fill: G.sage
+  }))), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: G.text,
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 14,
+      fontWeight: 600
+    }
+  }, "Track")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: G.mutedLo,
+      fontFamily: "'Lato',sans-serif",
+      fontSize: 18
+    }
+  }, "→")), /*#__PURE__*/React.createElement("button", {
     onClick: () => setView("themes"),
     className: "card-hover",
     style: {
@@ -2307,8 +2968,8 @@ function ThemesScreen({
     }
   }, "Tap a theme to apply it instantly. It's saved on this device, so it'll be here next time."), /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
+      display: "flex",
+      flexDirection: "column",
       gap: 14,
       padding: "0 16px"
     }
@@ -2320,67 +2981,397 @@ function ThemesScreen({
       onClick: () => changeTheme(key),
       className: "theme-swatch",
       style: {
-        borderRadius: 20,
-        padding: "16px",
+        display: "flex",
+        alignItems: "center",
+        gap: 16,
+        borderRadius: 22,
+        padding: 14,
         cursor: "pointer",
         textAlign: "left",
-        background: t.bg,
+        background: `linear-gradient(135deg,${t.bg},${t.bg})`,
         border: `2px solid ${active ? t.gold : t.border}`,
-        transition: "all 0.2s",
+        boxShadow: active ? `0 0 0 1px ${t.gold}40, 0 8px 24px ${t.gold}25` : "none",
+        transition: "all 0.25s",
         position: "relative"
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        display: "flex",
-        gap: 6,
-        marginBottom: 14
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        width: 18,
-        height: 18,
-        borderRadius: "50%",
-        background: t.gold,
-        display: "inline-block"
-      }
-    }), /*#__PURE__*/React.createElement("span", {
-      style: {
-        width: 18,
-        height: 18,
-        borderRadius: "50%",
-        background: t.sage,
-        display: "inline-block"
-      }
-    }), /*#__PURE__*/React.createElement("span", {
-      style: {
-        width: 18,
-        height: 18,
-        borderRadius: "50%",
-        background: t.cream,
-        display: "inline-block",
+        width: 72,
+        height: 72,
+        borderRadius: 16,
+        flexShrink: 0,
+        position: "relative",
+        overflow: "hidden",
+        background: t.bg,
         border: `1px solid ${t.border}`
       }
-    })), /*#__PURE__*/React.createElement("p", {
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "absolute",
+        top: -20,
+        right: -20,
+        width: 60,
+        height: 60,
+        borderRadius: "50%",
+        background: `radial-gradient(circle,${t.gold}33,transparent 70%)`
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "absolute",
+        top: 10,
+        left: 10,
+        width: 30,
+        height: 5,
+        borderRadius: 3,
+        background: t.cream,
+        opacity: 0.85
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "absolute",
+        top: 20,
+        left: 10,
+        width: 42,
+        height: 4,
+        borderRadius: 3,
+        background: t.textDim,
+        opacity: 0.7
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "absolute",
+        bottom: 10,
+        left: 10,
+        width: 52,
+        height: 16,
+        borderRadius: 8,
+        background: `linear-gradient(135deg,${t.gold},${t.goldSoft})`
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "absolute",
+        bottom: 32,
+        left: 10,
+        width: 8,
+        height: 8,
+        borderRadius: "50%",
+        background: t.sage
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "absolute",
+        bottom: 32,
+        left: 22,
+        width: 8,
+        height: 8,
+        borderRadius: "50%",
+        background: t.gold
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("p", {
       style: {
         fontFamily: "'Cormorant Garamond',serif",
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 600,
         color: t.cream
       }
-    }, t.label), active && /*#__PURE__*/React.createElement("p", {
+    }, t.label), /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontFamily: "'Lato',sans-serif",
+        fontSize: 11,
+        color: t.textDim,
+        marginTop: 2
+      }
+    }, t.desc), active && /*#__PURE__*/React.createElement("p", {
       style: {
         fontFamily: "'Lato',sans-serif",
         fontSize: 9,
         letterSpacing: 2,
         color: t.gold,
-        marginTop: 4,
+        marginTop: 6,
         fontWeight: 700
       }
-    }, "ACTIVE"));
+    }, "● ACTIVE")), !active && /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 22,
+        height: 22,
+        borderRadius: "50%",
+        flexShrink: 0,
+        border: `1.5px solid ${t.border}`
+      }
+    }));
   })));
 }
 
-/* ── MOTIVATIONS ── */
+/* ── TRACK ──
+   A monthly view of mood check-ins and sober days. Built from the same
+   local logs, nothing extra to set up. */
+const MOOD_COLOR = {
+  1: "red",
+  2: "goldSoft",
+  3: "muted",
+  4: "sage",
+  5: "gold"
+};
+function TrackScreen({
+  moodLog,
+  checkinLog,
+  onBack
+}) {
+  const [offset, setOffset] = useState(0); // months back from current
+
+  const base = new Date();
+  base.setDate(1);
+  base.setMonth(base.getMonth() + offset);
+  const year = base.getFullYear(),
+    month = base.getMonth();
+  const monthLabel = base.toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric"
+  });
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const pad = n => String(n).padStart(2, "0");
+  const cells = [];
+  for (let i = 0; i < firstWeekday; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  const dateStr = d => `${year}-${pad(month + 1)}-${pad(d)}`;
+  const moodFor = d => moodLog.find(m => m.date === dateStr(d));
+  const checkedIn = d => checkinLog.includes(dateStr(d));
+  const monthMoods = moodLog.filter(m => m.date.startsWith(`${year}-${pad(month + 1)}`));
+  const monthCheckins = checkinLog.filter(c => c.startsWith(`${year}-${pad(month + 1)}`)).length;
+  const avgMood = monthMoods.length ? Math.round(monthMoods.reduce((a, m) => a + m.mood, 0) / monthMoods.length) : null;
+  const isToday = d => {
+    const t = new Date();
+    return t.getFullYear() === year && t.getMonth() === month && t.getDate() === d;
+  };
+  const isFuture = d => new Date(year, month, d) > new Date();
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "36px 24px 8px",
+      display: "flex",
+      alignItems: "center",
+      gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onBack,
+    style: {
+      background: "transparent",
+      border: "none",
+      cursor: "pointer",
+      color: G.muted,
+      fontSize: 18,
+      padding: 0,
+      lineHeight: 1
+    }
+  }, "←"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Label, {
+    style: {
+      marginBottom: 8
+    }
+  }, "your history"), /*#__PURE__*/React.createElement(Title, {
+    size: 28
+  }, "Track"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: "0 20px",
+      margin: "10px 0 16px"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setOffset(o => o - 1),
+    style: {
+      background: "transparent",
+      border: "none",
+      color: G.muted,
+      cursor: "pointer",
+      fontSize: 18,
+      padding: 8
+    }
+  }, "‹"), /*#__PURE__*/React.createElement(Title, {
+    size: 17
+  }, monthLabel), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setOffset(o => Math.min(0, o + 1)),
+    disabled: offset >= 0,
+    style: {
+      background: "transparent",
+      border: "none",
+      cursor: offset >= 0 ? "default" : "pointer",
+      color: offset >= 0 ? G.mutedLo : G.muted,
+      fontSize: 18,
+      padding: 8
+    }
+  }, "›")), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(7,1fr)",
+      gap: 4,
+      marginBottom: 8
+    }
+  }, ["S", "M", "T", "W", "T", "F", "S"].map((d, i) => /*#__PURE__*/React.createElement("p", {
+    key: i,
+    style: {
+      textAlign: "center",
+      color: G.mutedLo,
+      fontSize: 10,
+      fontFamily: "'Lato',sans-serif",
+      fontWeight: 700
+    }
+  }, d))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(7,1fr)",
+      gap: 4
+    }
+  }, cells.map((d, i) => {
+    if (d === null) return /*#__PURE__*/React.createElement("div", {
+      key: i
+    });
+    const mood = moodFor(d);
+    const sober = checkedIn(d);
+    const future = isFuture(d);
+    const moodColor = mood ? G[MOOD_COLOR[mood.mood]] : null;
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        aspectRatio: "1",
+        borderRadius: 10,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+        background: moodColor ? `${moodColor}22` : "transparent",
+        border: isToday(d) ? `1.5px solid ${G.gold}` : `1px solid ${G.border}`,
+        opacity: future ? 0.3 : 1
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        color: moodColor || G.mutedLo,
+        fontFamily: "'Lato',sans-serif",
+        fontWeight: isToday(d) ? 700 : 400
+      }
+    }, d), mood && /*#__PURE__*/React.createElement(MoodOrb, {
+      color: moodColor,
+      v: mood.mood,
+      size: 10
+    }), sober && /*#__PURE__*/React.createElement("span", {
+      style: {
+        position: "absolute",
+        bottom: 2,
+        right: 2,
+        width: 5,
+        height: 5,
+        borderRadius: "50%",
+        background: G.sage
+      }
+    }));
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 10,
+      margin: "0 16px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: G.surface,
+      border: `1px solid ${G.border}`,
+      borderRadius: 18,
+      padding: "18px 10px",
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cormorant Garamond',serif",
+      fontSize: 28,
+      color: G.sage,
+      fontWeight: 700
+    }
+  }, monthCheckins), /*#__PURE__*/React.createElement(Label, {
+    style: {
+      marginTop: 4,
+      letterSpacing: 1
+    }
+  }, "SOBER CHECK-INS")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: G.surface,
+      border: `1px solid ${G.border}`,
+      borderRadius: 18,
+      padding: "18px 10px",
+      textAlign: "center"
+    }
+  }, avgMood ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement(MoodOrb, {
+    color: G[MOOD_COLOR[avgMood]],
+    v: avgMood,
+    size: 26
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cormorant Garamond',serif",
+      fontSize: 16,
+      color: G[MOOD_COLOR[avgMood]],
+      fontWeight: 600
+    }
+  }, MOOD_SCALE.find(m => m.v === avgMood)?.label)) : /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontFamily: "'Cormorant Garamond',serif",
+      fontSize: 28,
+      color: G.mutedLo
+    }
+  }, "—"), /*#__PURE__*/React.createElement(Label, {
+    style: {
+      marginTop: 4,
+      letterSpacing: 1
+    }
+  }, "AVERAGE MOOD"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      margin: "0 16px",
+      display: "flex",
+      gap: 14,
+      flexWrap: "wrap",
+      justifyContent: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 5
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 7,
+      height: 7,
+      borderRadius: "50%",
+      background: G.sage,
+      display: "inline-block"
+    }
+  }), /*#__PURE__*/React.createElement(Label, null, "sober check-in")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 5
+    }
+  }, /*#__PURE__*/React.createElement(MoodOrb, {
+    color: G.sage,
+    v: 4,
+    size: 10
+  }), /*#__PURE__*/React.createElement(Label, null, "mood logged"))));
+}
 function MotivationsScreen({
   motivations,
   addMotivation,
@@ -3615,6 +4606,8 @@ function App() {
   const [toolLog, setToolLog] = useState(() => loadLocal(STORE.tools, []));
   const [motivations, setMotivations] = useState(() => loadLocal(STORE.motivations, []));
   const [entries, setEntries] = useState(() => loadLocal(STORE.entries, []));
+  const [moodLog, setMoodLog] = useState(() => loadLocal(STORE.moods, []));
+  const [checkinLog, setCheckinLog] = useState(() => loadLocal(STORE.checkins, []));
   const [toast, setToast] = useState(null);
   const [themeKey, setThemeKey] = useState(() => {
     try {
@@ -3706,6 +4699,24 @@ function App() {
       return next;
     });
   };
+  const logMood = value => {
+    setMoodLog(log => {
+      const next = [...log.filter(m => m.date !== today), {
+        date: today,
+        mood: value
+      }];
+      saveLocal(STORE.moods, next);
+      return next;
+    });
+  };
+  const logCheckin = () => {
+    setCheckinLog(log => {
+      if (log.includes(today)) return log;
+      const next = [...log, today];
+      saveLocal(STORE.checkins, next);
+      return next;
+    });
+  };
   const resetEverything = () => {
     if (!window.confirm("This permanently deletes all your ClearPath data from this device — journal, streaks, everything. There's no backup. Continue?")) return;
     Object.values(STORE).forEach(k => {
@@ -3718,6 +4729,8 @@ function App() {
     setToolLog([]);
     setMotivations([]);
     setEntries([]);
+    setMoodLog([]);
+    setCheckinLog([]);
     setTab("home");
   };
   const LEFT_TABS = [{
@@ -3826,7 +4839,10 @@ function App() {
     user: user,
     setUser: setUserAndSave,
     notify: notify,
-    setTab: setTab
+    setTab: setTab,
+    moodLog: moodLog,
+    logMood: logMood,
+    logCheckin: logCheckin
   }), tab === "calm" && /*#__PURE__*/React.createElement(CalmScreen, {
     completedTools: completedTools,
     completeTool: completeTool,
@@ -3851,7 +4867,9 @@ function App() {
     setUser: setUserAndSave,
     themeKey: themeKey,
     changeTheme: changeTheme,
-    onReset: resetEverything
+    onReset: resetEverything,
+    moodLog: moodLog,
+    checkinLog: checkinLog
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
