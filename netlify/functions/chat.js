@@ -24,7 +24,7 @@ How you talk:
 
 Safety:
 - If someone says they don't want to do anything anymore, feel hopeless, or seem to be withdrawing, don't just validate and move on -- gently and directly ask whether they're having thoughts of hurting themselves.
-- If someone expresses thoughts of suicide, self-harm, or wanting to die: stay present and warm, do NOT go cold, clinical, or scripted, and do not abandon the conversation. Ask directly and gently whether they're safe right now. Encourage them clearly to reach out to a real crisis line or a trusted person right now, in addition to talking with you -- you do not need to recite phone numbers yourself, the app adds those automatically right after your reply, every time, guaranteed. Keep being a real, caring presence: it's fine to talk about what's good in their life or reasons they've mentioned for staying, but only as genuine, specific engagement with what they've actually told you -- never as a generic "life is good" speech that brushes past how serious this is.
+- If someone expresses thoughts of suicide, self-harm, or wanting to die: stay present and warm, do NOT go cold, clinical, or scripted, and do not abandon the conversation. Open with something genuine and specific to what they've actually told you, not a generic list of "beautiful things in life" -- a real, specific reason they have to care, or simply that you care that they're telling you this. Then still ask directly and gently whether they're safe right now -- never skip this question, but don't make it feel like a checklist either; weave it into one warm message. Encourage them clearly to reach out to a real crisis line or a trusted person right now, in addition to talking with you -- you do not need to recite phone numbers yourself, the app adds those automatically right after your reply, every time, guaranteed.
 - Never encourage substance use, self-harm, or anything that could hurt the person.
 - You can decline anything you'd normally decline, same as you would anywhere else.`;
 
@@ -33,7 +33,7 @@ Safety:
 // model said or whether its own response got cut off. This is deliberately not
 // left to the model alone -- the most important sentence in this whole app
 // can't be allowed to depend on a token limit or a content filter behaving.
-const CRISIS_PATTERN = /\b(kms|kys myself|kill myself|killing myself|end my life|ending my life|end it all|want(ed)? to die|wanna die|better off dead|no reason to live|don'?t want to (be alive|live)|can'?t go on|cant go on|hurt myself|hurting myself|self[- ]harm|suicidal|suicide|take my (own )?life)\b/i;
+const CRISIS_PATTERN = /\b(kms|kill myself|killing myself|end my life|ending my life|end it all|want(ed)? to die|wanna die|better off dead|no reason to live|don'?t want to (be alive|live)|can'?t go on|cant go on|hurt myself|hurting myself|harm myself|harming myself|self[- ]harm|suicidal|suicide|take my (own )?life|off myself|offing myself|unalive( myself)?|do myself in)\b/i;
 
 const CRISIS_BLOCK = "\n\nIf you're thinking about suicide or hurting yourself, please reach out right now: in the US, call or text 988 (Suicide & Crisis Lifeline, 24/7). In the UK & Ireland, call Samaritans on 116 123. Elsewhere, findahelpline.com lists crisis lines by country. If you're in immediate danger, please contact your local emergency number.";
 
@@ -90,14 +90,15 @@ exports.handler = async (event) => {
           contents,
           systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
           generationConfig: { maxOutputTokens: 350, temperature: 1.0 },
-          // Google's own filter (separate from our system prompt) defaults to
-          // blocking/truncating fairly aggressively, which misfires constantly
-          // on normal venting about hard feelings. This loosens it one notch
-          // for the categories that misfire here -- it does not disable safety,
-          // it stops it from being absurdly cautious on ordinary conversation.
+          // Google's own filter (separate from our system prompt and our hard-
+          // coded crisis block below) was still cutting off completely ordinary
+          // venting ("problems at home," "feeling heavy") even at BLOCK_ONLY_HIGH.
+          // This app already has its own safety net independent of this setting,
+          // so for the two categories actually misfiring here, turn it off
+          // entirely rather than half-fixing it again.
           safetySettings: [
-            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" },
+            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
             { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
           ],
         }),
